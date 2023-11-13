@@ -58,6 +58,15 @@ def get_dirs_with_depth(dir: str, depth: int, include: List[str], exclude: List[
 def parse_branches(stdout: bytes) -> List[str]:
     return stdout.decode().rstrip().split("\n")
 
+def find_current_branch():
+    current_branch = None
+    local_branches_raw = subprocess.check_output([shutil.which("git"), "--no-pager", "-C", dir, "branch"])
+    for branch in local_branches_raw.decode().split("\n"):
+        if branch.startswith("*"):
+            current_branch = branch.split()[-1]
+            break
+    return current_branch
+
 def main(dirs: List[str], args: argparse.Namespace):
     pad = _pad = "   "
     pad2 = _pad * 2
@@ -101,14 +110,6 @@ def main(dirs: List[str], args: argparse.Namespace):
         
         remote_branches = parse_branches(subprocess.check_output([shutil.which("git"), "--no-pager", "-C", dir, 
                                                                   "branch", "--remote"]))
-        
-        current_branch = None
-        local_branches_raw = subprocess.check_output([shutil.which("git"), "--no-pager", "-C", dir, "branch"])
-        for branch in local_branches_raw.decode().split("\n"):
-            if branch.startswith("*"):
-                current_branch = branch.split()[-1]
-                break
-
         root_branch = None
         for branch in remote_branches:
             if branch:
@@ -129,6 +130,8 @@ def main(dirs: List[str], args: argparse.Namespace):
                         root_branch = "main"
                         break
         
+        current_branch = find_current_branch(dir)
+
         if current_branch is None:
             logger.warning(f"{pad}{Colours.yellow}Unable to determine current branch{Colours.clear}")
         if root_branch is None:
@@ -141,6 +144,7 @@ def main(dirs: List[str], args: argparse.Namespace):
 
         for branch in local_branches:
             branch_name = branch.split()[0].replace("'", "", 1)
+
             if "HEAD" in branch:
                 logger.info(f"{pad}{Colours.yellow}{branch}{Colours.clear}")
             elif "origin" not in branch:
@@ -183,11 +187,14 @@ def main(dirs: List[str], args: argparse.Namespace):
                             logger.debug(f"{pad2}Switching from {current_branch} to {root_branch}")
                             switch_result = subprocess.run([shutil.which("git"), "-C", dir, "switch", root_branch],
                                                         capture_output=True)
+                            
                             if switch_result.returncode != 0:
                                 safe_to_delete = False
                                 logger.error(f"{pad2}{Colours.red}Switch failed, skipping delete of "
                                              f"{branch_name}{Colours.clear}")
                                 logger.error(f"{pad}{Colours.red}{switch_result.stderr.decode()}{Colours.clear}")
+                            else:
+                                current_branch = root_branch
 
                     if safe_to_delete:
                         logger.info(f"{pad2}Deleting local branch {branch_name}")
