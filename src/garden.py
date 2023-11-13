@@ -32,27 +32,31 @@ class Colours:
     green = "\x1b[0;32;40m"
     clear = "\x1b[0m"
 
-def get_dirs_with_depth(dir: str, depth: int, exclude: str) -> List[str]:
+def get_dirs_with_depth(dir: str, depth: int, include: List[str], exclude: List[str]) -> List[str]:
     dirs = []
     if depth == 0:
         return dirs
     
     if os.path.isdir(dir):
-        if os.path.basename(dir) in exclude:
+        dir_base = os.path.basename(dir)
+        if dir_base in exclude:
             return dirs
         if ".git" in os.listdir(dir):
+            if include:
+                if not any([i in dir_base for i in include]):
+                    return dirs
             dirs.append(dir)
 
     for item in os.listdir(dir):
         item_path = os.path.join(dir, item)
         if os.path.isdir(item_path):
             if depth > 1:
-                subdirs = get_dirs_with_depth(item_path, depth-1, exclude)
+                subdirs = get_dirs_with_depth(item_path, depth-1, include, exclude)
                 dirs.extend(subdirs)
     return dirs
 
 def parse_branches(stdout: bytes) -> List[str]:
-    return stdout.decode().replace("'","").rstrip().split("\n")
+    return stdout.decode().rstrip().split("\n")
 
 def main(dirs: List[str], args: argparse.Namespace):
     pad = _pad = "   "
@@ -136,7 +140,7 @@ def main(dirs: List[str], args: argparse.Namespace):
                 logger.warning(f"{pad}{Colours.yellow}--delete will be skipped{Colours.clear}")
 
         for branch in local_branches:
-            branch_name = branch.split()[0]
+            branch_name = branch.split()[0].replace("'", "", 1)
             if "HEAD" in branch:
                 logger.info(f"{pad}{Colours.yellow}{branch}{Colours.clear}")
             elif "origin" not in branch:
@@ -173,8 +177,8 @@ def main(dirs: List[str], args: argparse.Namespace):
                                                      capture_output=True)
                         if git_status.stdout.decode():
                             safe_to_delete = False
-                            logger.warning(f"{pad2}{Colours.yellow}Found uncommitted changes on current branch "
-                                        f"{current_branch}, skipping delete of {branch_name}{Colours.clear}")
+                            logger.warning(f"{pad2}{Colours.yellow}Switching precluded by uncommitted changes on "
+                                           f"current branch - skipping delete of {branch_name}{Colours.clear}")
                         else:
                             logger.debug(f"{pad2}Switching from {current_branch} to {root_branch}")
                             switch_result = subprocess.run([shutil.which("git"), "-C", dir, "switch", root_branch],
@@ -210,7 +214,8 @@ if __name__ == "__main__":
     parser.add_argument("--quiet", action="store_true", help="(Optional) Display local/gone branches only [Default: output all operations + branch status]")
     parser.add_argument("--no-fetch", action="store_true", help="(Optional) Skip fetching of remote tracking branches [Default: fetch branches]")
     parser.add_argument("--no-prune", action="store_true", help="(Optional) Skip pruning of remote tracking branches [Default: prune branches]")
-    parser.add_argument("--exclude", action="append", default=[], required=False, help="(Optional) Skip processing of directory (pass once per directory name to exclude) [Default: no exclusions]")
+    parser.add_argument("--include", action="append", default=[], required=False, help="(Optional) Only include directories matching sub-string (pass once per directory name to include multiple) [Default: no exclusions]")
+    parser.add_argument("--exclude", action="append", default=[], required=False, help="(Optional) Skip processing of directory matching sub-string (pass once per directory name to exclude multiple) [Default: no exclusions]")
     parser.add_argument("--remote", action="store_true", help="(Optional) Report remote only branches (based on remote tracking branches/fetch rules) [Default: Not reported]")
     parser.add_argument("--purge", action="store_true", help="(Optional) Delete ALL remote tracking branches [Default: Only pruned if remote branch has been deleted]")
     parser.add_argument("--ff", action="store_true", help="(Optional) Fast-forward master/main branch after fetch [Default: fetch only]")
@@ -228,4 +233,4 @@ if __name__ == "__main__":
             if type(handler) is logging.StreamHandler:
                 handler.setLevel(logging.INFO)
 
-    main(get_dirs_with_depth(os.path.expanduser(args.directory), args.depth, args.exclude), args)
+    main(get_dirs_with_depth(os.path.expanduser(args.directory), args.depth, args.include, args.exclude), args)
