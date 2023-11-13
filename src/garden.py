@@ -58,7 +58,7 @@ def get_dirs_with_depth(dir: str, depth: int, include: List[str], exclude: List[
 def parse_branches(stdout: bytes) -> List[str]:
     return stdout.decode().rstrip().split("\n")
 
-def find_current_branch():
+def find_current_branch(dir):
     current_branch = None
     local_branches_raw = subprocess.check_output([shutil.which("git"), "--no-pager", "-C", dir, "branch"])
     for branch in local_branches_raw.decode().split("\n"):
@@ -211,7 +211,7 @@ def main(dirs: List[str], args: argparse.Namespace):
                 if "/HEAD" in remote_branch:
                     continue 
                 basename = remote_branch.split("origin/")[-1]
-                if basename not in [b.split()[0].rstrip() for b in local_branches]:
+                if basename not in [b.split()[0].rstrip().replace("'", "", 1) for b in local_branches]:
                     logger.info(f"{pad}{Colours.yellow}{basename} [remote only]{Colours.clear}")
                
 if __name__ == "__main__":
