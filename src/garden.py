@@ -144,17 +144,18 @@ def main(dirs: List[str], args: argparse.Namespace):
 
         for branch in local_branches:
             branch_name = branch.split()[0].replace("'", "", 1)
+            status = "[" + branch.split('[')[-1].replace("'", "")
 
             if "HEAD" in branch:
                 logger.info(f"{pad}{Colours.yellow}{branch}{Colours.clear}")
             elif "origin" not in branch:
                 logger.info(f"{pad}{Colours.yellow}{branch.rstrip()} [local only]{Colours.clear}")
             elif ("[ahead" in branch):
-                logger.debug(f"{pad}{Colours.yellow}{branch_name} [{branch.split('[')[-1]}")
+                logger.debug(f"{pad}{Colours.yellow}{branch_name} {status}")
             
             elif ("[behind" in branch):
                 if args.ff and branch_name == root_branch:
-                    logger.info(f"{pad}{Colours.yellow}{branch_name} [{branch.split('[')[-1]}{Colours.clear}")
+                    logger.info(f"{pad}{Colours.yellow}{branch_name} {status}{Colours.clear}")
                     logger.info(f"{pad2}Fast-forwarding {branch_name}")
 
                     if current_branch == root_branch:
@@ -170,7 +171,7 @@ def main(dirs: List[str], args: argparse.Namespace):
                         logger.error(f"{pad2}{Colours.red}Unable to fast-forward {branch_name}{Colours.clear}")
                         logger.error(f"{pad2}{Colours.red}{ff_result.stderr.decode()}{Colours.clear}")
                 else:
-                    logger.debug(f"{pad}{Colours.yellow}{branch_name} [{branch.split('[')[-1]}{Colours.clear}")
+                    logger.debug(f"{pad}{Colours.yellow}{branch_name} {status}{Colours.clear}")
 
             elif "[gone]" in branch:
                 logger.info(f"{pad}{Colours.red}{branch_name} [remote deleted]{Colours.clear}")
