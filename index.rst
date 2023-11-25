@@ -5,4 +5,4 @@ Git-Garden
    :members:
    :undoc-members:
    :private-members:
-   :exclude-members: Colours
+   :exclude-members: Colours, CustomFormatter

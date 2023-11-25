@@ -11,18 +11,6 @@ import argparse
 import logging
 from typing import List
 
-logger = logging.getLogger(os.path.basename(__file__))
-file_handler = logging.FileHandler(os.path.join(os.path.dirname(__file__), 'garden.log'), mode="w")
-file_handler.setFormatter(logging.Formatter("{asctime} - {name} - {levelname:^5s} - {message}", style="{",
-                                            datefmt='%Y-%m-%d %H:%M:%S'))
-file_handler.setLevel(logging.DEBUG)
-screen_handler = logging.StreamHandler()
-screen_handler.setLevel(logging.DEBUG)
-
-logger.setLevel(logging.DEBUG)
-# logger.addHandler(file_handler)  # TODO: filter colour codes from file logs
-logger.addHandler(screen_handler)
-
 class Colours:
     """
     May require calling os.system("color") to enable ANSI codes on Windows
@@ -32,6 +20,56 @@ class Colours:
     red = "\x1b[0;31;40m"
     green = "\x1b[0;32;40m"
     clear = "\x1b[0m"
+
+class CustomFormatter(logging.Formatter):
+    """
+    Custom formatter for logging, allowing parsing of log messages.
+
+    This formatter extends the base logging.Formatter and provides a method
+    for custom parsing of log messages before they are emitted.
+
+    :param fmt: The format string for the log message.
+    :param datefmt: The format string for the date in the log message.
+    :param style: The formatting style ('%' or '{' style).
+    """
+
+    def __init__(self, fmt: str, datefmt: str = None, style: str = '{') -> None:
+        super().__init__(fmt, datefmt, style)
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format the specified record, including custom parsing of the log message.
+
+        :param record: The log record to be formatted.
+        :return: The formatted log message.
+        """
+        record.msg = self.strip_colours(record.msg)
+        return super().format(record)
+
+    def strip_colours(self, message: str) -> str:
+        """
+        Strip the ANSI colour codes from the log message.
+
+        :param message: The original log message.
+        :return: The parsed log message.
+        """
+        message = message.replace(Colours.yellow, "").replace(Colours.red, "").replace(Colours.green, "")
+        message = message.replace(Colours.clear, "")
+        return message
+    
+logger = logging.getLogger(os.path.basename(__file__))
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())  # must be defined before file_handler to avoid formatting clash
+
+file_handler = logging.FileHandler(os.path.join(os.path.dirname(__file__), 'garden.log'), mode="w")
+custom_fmtr = CustomFormatter(
+    fmt="{asctime} - {name} - {levelname:^5s} - {message}",
+    datefmt='%Y-%m-%d %H:%M:%S',
+    style="{"
+)
+file_handler.setFormatter(custom_fmtr)
+logger.addHandler(file_handler)
+
 
 def _get_dirs_with_depth(dir: str, depth: int, include: List[str], exclude: List[str]) -> List[str]:
     """
