@@ -5,5 +5,5 @@ setup(
     version="0.2",
     packages=find_packages(),
     install_requires=[],
-    extras_require={"dev": ["ruff", "sphinx", "sphinx-autodoc-typehints"]},
+    extras_require={"dev": ["ruff", "sphinx", "sphinx-autodoc-typehints", "tox"]},
 )
