@@ -2,12 +2,14 @@
 
 ## Installation
 
-This project has no external dependencies other than `git`, no installation is necessary for regular use.
+```
+# no external dependencies other than git itself
+python -m pip install -r requirements.txt
+```
 
 ## Develop Installation
 
 ```
-# Currently only required for generating Sphinx docs
 python -m pip install -r dev-requirements.txt
 ```
 

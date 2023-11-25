@@ -1,8 +1,7 @@
 Git-Garden
 ==========
 
-.. automodule:: git_garden.garden
+.. automodule:: git_garden
    :members:
    :undoc-members:
    :private-members:
-   :exclude-members: Colours, CustomFormatter
