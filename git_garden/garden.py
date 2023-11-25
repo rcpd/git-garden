@@ -1,5 +1,6 @@
 """
-TODO
+A simple tool for automating a recursive scan of local git repos to display their status compared to their remote 
+tracking branches with maintenance features such as fetching, pruning, deleting orphaned branches and fast-forwarding. 
 """
 
 import os
@@ -11,7 +12,7 @@ import logging
 from typing import List
 
 logger = logging.getLogger(os.path.basename(__file__))
-file_handler = logging.FileHandler('garden.log', mode="w")
+file_handler = logging.FileHandler(os.path.join(os.path.dirname(__file__), 'garden.log'), mode="w")
 file_handler.setFormatter(logging.Formatter("{asctime} - {name} - {levelname:^5s} - {message}", style="{",
                                             datefmt='%Y-%m-%d %H:%M:%S'))
 file_handler.setLevel(logging.DEBUG)
@@ -19,7 +20,7 @@ screen_handler = logging.StreamHandler()
 screen_handler.setLevel(logging.DEBUG)
 
 logger.setLevel(logging.DEBUG)
-logger.addHandler(file_handler)
+# logger.addHandler(file_handler)  # TODO: filter colour codes from file logs
 logger.addHandler(screen_handler)
 
 class Colours:
@@ -32,7 +33,15 @@ class Colours:
     green = "\x1b[0;32;40m"
     clear = "\x1b[0m"
 
-def get_dirs_with_depth(dir: str, depth: int, include: List[str], exclude: List[str]) -> List[str]:
+def _get_dirs_with_depth(dir: str, depth: int, include: List[str], exclude: List[str]) -> List[str]:
+    """
+    Recursively search directories for git repos until a given depth
+
+    :param dir: Directory to search
+    :param depth: Depth to search
+    :param include: Filter results to only include directories containing these string
+    :return: Directories containing git repos
+    """
     dirs = []
     if depth == 0:
         return dirs
@@ -51,14 +60,26 @@ def get_dirs_with_depth(dir: str, depth: int, include: List[str], exclude: List[
         item_path = os.path.join(dir, item)
         if os.path.isdir(item_path):
             if depth > 1:
-                subdirs = get_dirs_with_depth(item_path, depth-1, include, exclude)
+                subdirs = _get_dirs_with_depth(item_path, depth-1, include, exclude)
                 dirs.extend(subdirs)
     return dirs
 
-def parse_branches(stdout: bytes) -> List[str]:
+def _parse_branches(stdout: bytes) -> List[str]:
+    """
+    Parse the output of a git branch command
+
+    :param stdout: Output of git branch command
+    :return: List of branches
+    """
     return stdout.decode().rstrip().split("\n")
 
-def find_current_branch(dir):
+def _find_current_branch(dir) -> str:
+    """
+    Find the current branch name
+
+    :param dir: Current directory being processed
+    :return: Current branch name
+    """
     current_branch = None
     local_branches_raw = subprocess.check_output([shutil.which("git"), "--no-pager", "-C", dir, "branch"])
     for branch in local_branches_raw.decode().split("\n"):
@@ -67,7 +88,13 @@ def find_current_branch(dir):
             break
     return current_branch
 
-def main(dirs: List[str], args: argparse.Namespace):
+def _main(dirs: List[str], args: argparse.Namespace) -> None:
+    """
+    Execute the main logic of the script
+
+    :param dirs: Directories containing git repos
+    :param args: Command line arguments
+    """
     pad = _pad = "   "
     pad2 = _pad * 2
     for dir in dirs:
@@ -82,7 +109,7 @@ def main(dirs: List[str], args: argparse.Namespace):
                                             "--list", "-r", "origin/*", "--format", "%(refname:short)"])
 
             # trying to batch the delete without rate limiting will crash git on very large repos
-            for branch in parse_branches(proc):
+            for branch in _parse_branches(proc):
                 if branch == "origin":
                     continue
                 if branch:
@@ -104,11 +131,11 @@ def main(dirs: List[str], args: argparse.Namespace):
             if proc.stderr.decode().startswith("fatal: not a git repository"):
                 continue
         
-        local_branches = parse_branches(
+        local_branches = _parse_branches(
             subprocess.check_output([shutil.which("git"), "--no-pager", "-C", dir, "branch", "--format", 
                                      "'%(refname:short) %(upstream:short) %(upstream:track)'"]))
         
-        remote_branches = parse_branches(subprocess.check_output([shutil.which("git"), "--no-pager", "-C", dir, 
+        remote_branches = _parse_branches(subprocess.check_output([shutil.which("git"), "--no-pager", "-C", dir, 
                                                                   "branch", "--remote"]))
         root_branch = None
         for branch in remote_branches:
@@ -130,7 +157,7 @@ def main(dirs: List[str], args: argparse.Namespace):
                         root_branch = "main"
                         break
         
-        current_branch = find_current_branch(dir)
+        current_branch = _find_current_branch(dir)
 
         if current_branch is None:
             logger.warning(f"{pad}{Colours.yellow}Unable to determine current branch{Colours.clear}")
@@ -241,4 +268,4 @@ if __name__ == "__main__":
             if type(handler) is logging.StreamHandler:
                 handler.setLevel(logging.INFO)
 
-    main(get_dirs_with_depth(os.path.expanduser(args.directory), args.depth, args.include, args.exclude), args)
+    _main(_get_dirs_with_depth(os.path.expanduser(args.directory), args.depth, args.include, args.exclude), args)
