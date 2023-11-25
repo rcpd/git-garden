@@ -2,7 +2,14 @@
 
 ## Installation
 
-This project has no external dependencies other than `git`, no installation is necessary.
+This project has no external dependencies other than `git`, no installation is necessary for regular use.
+
+## Develop Installation
+
+```
+# Currently only required for generating Sphinx docs
+python -m pip install -r dev-requirements.txt
+```
 
 ## Common Use Cases
 
@@ -45,4 +52,10 @@ git switch -c temp4; git push -f; git push origin --delete temp4; git reset HEAD
 
 git switch git-garden -f; git branch -D temp temp2 temp3 temp4 # cleanup
 git push origin --delete temp temp2 temp3 temp4 # cleanup
+```
+
+## Generate Documentation
+
+```
+sphinx-build -b html . docs
 ```
