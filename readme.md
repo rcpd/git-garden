@@ -56,8 +56,13 @@ git switch git-garden -f; git branch -D temp temp2 temp3 temp4 # cleanup
 git push origin --delete temp temp2 temp3 temp4 # cleanup
 ```
 
-## Generate Documentation
+## Pre-PR Checks
 
 ```
+# ruff (r/w)
+ruff format .
+ruff check . --fix
+
+# Generate Documentation
 sphinx-build -b html . docs
 ```

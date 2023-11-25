@@ -1,7 +1,7 @@
 Git-Garden
 ==========
 
-.. automodule:: git_garden
+.. autoclass:: git_garden.GitGarden
    :members:
    :undoc-members:
    :private-members:
