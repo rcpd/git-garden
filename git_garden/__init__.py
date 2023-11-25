@@ -64,7 +64,8 @@ class GitGarden:
                     dirs.extend(subdirs)
         return dirs
 
-    def _parse_branches(self, stdout: bytes) -> List[str]:
+    @staticmethod
+    def _parse_branches(stdout: bytes) -> List[str]:
         """
         Parse the output of a git branch command
 
@@ -73,7 +74,8 @@ class GitGarden:
         """
         return stdout.decode().rstrip().split("\n")
 
-    def _find_current_branch(self, dir) -> str:
+    @staticmethod
+    def _find_current_branch(dir: str) -> str:
         """
         Find the current branch name
 
@@ -89,6 +91,59 @@ class GitGarden:
                 current_branch = branch.split()[-1]
                 break
         return current_branch
+
+    @staticmethod
+    def _check_git_status(dir: str) -> bool:
+        git_status = subprocess.run(
+            [
+                shutil.which("git"),
+                "-C",
+                dir,
+                "status",
+                "--porcelain",
+            ],
+            capture_output=True,
+        )
+        return bool(git_status.stdout.decode())
+
+    @staticmethod
+    def _create_branch(branch_name: str, dir: str = ".") -> subprocess.CompletedProcess:
+        """
+        Create a branch within a given git repo.
+
+        :param branch_name: Name of the branch to create.
+        """
+        return subprocess.run(
+            [
+                shutil.which("git"),
+                "-C",
+                dir,
+                "branch",
+                "-c",
+                branch_name,
+            ],
+            capture_output=True,
+        )
+
+    @staticmethod
+    def _delete_branch(branch_name: str, dir: str = ".") -> subprocess.CompletedProcess:
+        """
+        Delete a branch within a given git repo.
+
+        :param dir: Current directory being processed
+        :param branch_name: Branch to delete
+        """
+        return subprocess.run(
+            [
+                shutil.which("git"),
+                "-C",
+                dir,
+                "branch",
+                "-D",
+                branch_name,
+            ],
+            capture_output=True,
+        )
 
     def _main(self, dirs: List[str], args: argparse.Namespace) -> None:
         """
@@ -281,17 +336,7 @@ class GitGarden:
                     if args.delete:
                         safe_to_delete = True
                         if current_branch == branch_name:
-                            git_status = subprocess.run(
-                                [
-                                    shutil.which("git"),
-                                    "-C",
-                                    dir,
-                                    "status",
-                                    "--porcelain",
-                                ],
-                                capture_output=True,
-                            )
-                            if git_status.stdout.decode():
+                            if self._check_git_status(dir):
                                 safe_to_delete = False
                                 self.logger.warning(
                                     f"{pad2}{Colours.yellow}Switching precluded by uncommitted changes on "
@@ -328,23 +373,13 @@ class GitGarden:
                             self.logger.info(
                                 f"{pad2}Deleting local branch {branch_name}"
                             )
-                            del_result = subprocess.run(
-                                [
-                                    shutil.which("git"),
-                                    "-C",
-                                    dir,
-                                    "branch",
-                                    "-D",
-                                    branch_name,
-                                ],
-                                capture_output=True,
-                            )
+                            del_result = self._delete_branch(branch_name, dir=dir)
                             if del_result.returncode != 0:
                                 self.logger.error(
                                     f"{pad}{Colours.red}Unable to delete {branch_name}{Colours.clear}"
                                 )
                                 self.logger.error(
-                                    f"{pad}{Colours.red}{ff_result.stderr.decode()}{Colours.clear}"
+                                    f"{pad}{Colours.red}{del_result.stderr.decode()}{Colours.clear}"
                                 )
                 else:
                     self.logger.debug(
