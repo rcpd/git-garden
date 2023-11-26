@@ -29,16 +29,23 @@ class GitGarden:
             args,
         )
 
+        self.pad = _pad = "   "
+        self.pad2 = _pad * 2
+        if args.quiet:
+            self.pad = f"{_pad}{dir}: "
+            self.pad2 = f"{_pad}{_pad}{dir}: "
+
     def _get_dirs_with_depth(
         self, dir: str, depth: int, include: List[str], exclude: List[str]
     ) -> List[str]:
         """
-        Recursively search directories for git repos until a given depth
+        Recursively search directories for git repos until a given depth.
 
-        :param dir: Directory to search
-        :param depth: Depth to search
-        :param include: Filter results to only include directories containing these string
-        :return: Directories containing git repos
+        :param dir: Directory to search.
+        :param exclude: Filter results to exclude directories containing these sub-string(s).
+        :param depth: Depth to search.
+        :param include: Filter results to only include directories containing these sub-string(s).
+        :return: Directories containing git repos.
         """
         dirs = []
         if depth == 0:
@@ -67,20 +74,20 @@ class GitGarden:
     @staticmethod
     def _parse_branches(stdout: bytes) -> List[str]:
         """
-        Parse the output of a git branch command
+        Parse the output of a git branch command.
 
-        :param stdout: Output of git branch command
-        :return: List of branches
+        :param stdout: Output of git branch command.
+        :return: List of branches.
         """
         return stdout.decode().rstrip().split("\n")
 
     @staticmethod
     def _find_current_branch(dir: str) -> str:
         """
-        Find the current branch name
+        Find the current branch name.
 
-        :param dir: Current directory being processed
-        :return: Current branch name
+        :param dir: Current directory being processed.
+        :return: Current branch name.
         """
         current_branch = None
         local_branches_raw = subprocess.check_output(
@@ -94,6 +101,12 @@ class GitGarden:
 
     @staticmethod
     def _check_git_status(dir: str) -> bool:
+        """
+        Check status of git working directory.
+
+        :param dir: Current directory being processed.
+        :return: Working directory is clean (False) or dirty (True).
+        """
         git_status = subprocess.run(
             [
                 shutil.which("git"),
@@ -112,6 +125,8 @@ class GitGarden:
         Create a branch within a given git repo.
 
         :param branch_name: Name of the branch to create.
+        :param dir: Current directory being processed.
+        :return: CompletedProcess result from branch creation.
         """
         return subprocess.run(
             [
@@ -130,8 +145,9 @@ class GitGarden:
         """
         Delete a branch within a given git repo.
 
-        :param dir: Current directory being processed
-        :param branch_name: Branch to delete
+        :param dir: Current directory being processed.
+        :param branch_name: Branch to delete.
+        :return: CompletedProcess result from branch deletion.
         """
         return subprocess.run(
             [
@@ -145,6 +161,48 @@ class GitGarden:
             capture_output=True,
         )
 
+    def _purge_remote_branches(self, dir: str) -> None:
+        """
+        Recursively purge all remote tracking branches from a given git repo.
+
+        :param dir: Current directory being processed.
+        """
+        self.logger.info(f"Purging ALL remote tracking branches from {dir}")
+        proc = subprocess.check_output(
+            [
+                shutil.which("git"),
+                "--no-pager",
+                "-C",
+                dir,
+                "branch",
+                "--list",
+                "-r",
+                "origin/*",
+                "--format",
+                "%(refname:short)",
+            ]
+        )
+
+        # trying to batch the delete without rate limiting will crash git on very large repos
+        for branch in self._parse_branches(proc):
+            if branch == "origin":
+                continue
+            if branch:
+                self.logger.debug(
+                    f"{self.pad}Deleting remote tracking branch: {branch}"
+                )
+                subprocess.check_call(
+                    [
+                        shutil.which("git"),
+                        "-C",
+                        dir,
+                        "branch",
+                        "-r",
+                        "-D",
+                        branch,
+                    ]
+                )
+
     def _main(self, dirs: List[str], args: argparse.Namespace) -> None:
         """
         Execute the main logic of the script
@@ -152,51 +210,9 @@ class GitGarden:
         :param dirs: Directories containing git repos
         :param args: Command line arguments
         """
-        pad = _pad = "   "
-        pad2 = _pad * 2
         for dir in dirs:
-            if args.quiet:
-                pad = f"{_pad}{dir}: "
-                pad2 = f"{_pad}{_pad}{dir}: "
-
             if args.purge:
-                self.logger.info(f"Purging ALL remote tracking branches from {dir}")
-
-                proc = subprocess.check_output(
-                    [
-                        shutil.which("git"),
-                        "--no-pager",
-                        "-C",
-                        dir,
-                        "branch",
-                        "--list",
-                        "-r",
-                        "origin/*",
-                        "--format",
-                        "%(refname:short)",
-                    ]
-                )
-
-                # trying to batch the delete without rate limiting will crash git on very large repos
-                for branch in self._parse_branches(proc):
-                    if branch == "origin":
-                        continue
-                    if branch:
-                        self.logger.debug(
-                            f"{pad}Deleting remote tracking branch: {branch}"
-                        )
-                        subprocess.check_output(
-                            [
-                                shutil.which("git"),
-                                "-C",
-                                dir,
-                                "branch",
-                                "-r",
-                                "-D",
-                                branch,
-                            ]
-                        )
-
+                self._purge_remote_branches()
             if args.no_fetch:
                 self.logger.debug(f"Scanning {dir}")
             elif args.no_prune:
@@ -260,20 +276,20 @@ class GitGarden:
 
             if current_branch is None:
                 self.logger.warning(
-                    f"{pad}{Colours.yellow}Unable to determine current branch{Colours.clear}"
+                    f"{self.pad}{Colours.yellow}Unable to determine current branch{Colours.clear}"
                 )
             if root_branch is None:
                 self.logger.warning(
-                    f"{pad}{Colours.yellow}Unable to determine root branch{Colours.clear}"
+                    f"{self.pad}{Colours.yellow}Unable to determine root branch{Colours.clear}"
                 )
             if root_branch is None or current_branch is None:
                 if args.ff:
                     self.logger.warning(
-                        f"{pad}{Colours.yellow}--ff will be skipped{Colours.clear}"
+                        f"{self.pad}{Colours.yellow}--ff will be skipped{Colours.clear}"
                     )
                 if args.delete:
                     self.logger.warning(
-                        f"{pad}{Colours.yellow}--delete will be skipped{Colours.clear}"
+                        f"{self.pad}{Colours.yellow}--delete will be skipped{Colours.clear}"
                     )
 
             for branch in local_branches:
@@ -282,21 +298,23 @@ class GitGarden:
 
                 if "HEAD" in branch:
                     self.logger.info(
-                        f"{pad}{Colours.yellow}{branch_name}{Colours.clear}"
+                        f"{self.pad}{Colours.yellow}{branch_name}{Colours.clear}"
                     )
                 elif "origin" not in branch:
                     self.logger.info(
-                        f"{pad}{Colours.yellow}{branch_name} [local only]{Colours.clear}"
+                        f"{self.pad}{Colours.yellow}{branch_name} [local only]{Colours.clear}"
                     )
                 elif "[ahead" in branch:
-                    self.logger.debug(f"{pad}{Colours.yellow}{branch_name} {status}")
+                    self.logger.debug(
+                        f"{self.pad}{Colours.yellow}{branch_name} {status}"
+                    )
 
                 elif "[behind" in branch:
                     if args.ff and branch_name == root_branch:
                         self.logger.info(
-                            f"{pad}{Colours.yellow}{branch_name} {status}{Colours.clear}"
+                            f"{self.pad}{Colours.yellow}{branch_name} {status}{Colours.clear}"
                         )
-                        self.logger.info(f"{pad2}Fast-forwarding {branch_name}")
+                        self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
 
                         if current_branch == root_branch:
                             ff_result = subprocess.run(
@@ -319,19 +337,19 @@ class GitGarden:
 
                         if ff_result.returncode != 0:
                             self.logger.error(
-                                f"{pad2}{Colours.red}Unable to fast-forward {branch_name}{Colours.clear}"
+                                f"{self.pad2}{Colours.red}Unable to fast-forward {branch_name}{Colours.clear}"
                             )
                             self.logger.error(
-                                f"{pad2}{Colours.red}{ff_result.stderr.decode()}{Colours.clear}"
+                                f"{self.pad2}{Colours.red}{ff_result.stderr.decode()}{Colours.clear}"
                             )
                     else:
                         self.logger.debug(
-                            f"{pad}{Colours.yellow}{branch_name} {status}{Colours.clear}"
+                            f"{self.pad}{Colours.yellow}{branch_name} {status}{Colours.clear}"
                         )
 
                 elif "[gone]" in branch:
                     self.logger.info(
-                        f"{pad}{Colours.red}{branch_name} [remote deleted]{Colours.clear}"
+                        f"{self.pad}{Colours.red}{branch_name} [remote deleted]{Colours.clear}"
                     )
                     if args.delete:
                         safe_to_delete = True
@@ -339,12 +357,12 @@ class GitGarden:
                             if self._check_git_status(dir):
                                 safe_to_delete = False
                                 self.logger.warning(
-                                    f"{pad2}{Colours.yellow}Switching precluded by uncommitted changes on "
+                                    f"{self.pad2}{Colours.yellow}Switching precluded by uncommitted changes on "
                                     f"current branch - skipping delete of {branch_name}{Colours.clear}"
                                 )
                             else:
                                 self.logger.debug(
-                                    f"{pad2}Switching from {current_branch} to {root_branch}"
+                                    f"{self.pad2}Switching from {current_branch} to {root_branch}"
                                 )
                                 switch_result = subprocess.run(
                                     [
@@ -360,30 +378,30 @@ class GitGarden:
                                 if switch_result.returncode != 0:
                                     safe_to_delete = False
                                     self.logger.error(
-                                        f"{pad2}{Colours.red}Switch failed, skipping delete of "
+                                        f"{self.pad2}{Colours.red}Switch failed, skipping delete of "
                                         f"{branch_name}{Colours.clear}"
                                     )
                                     self.logger.error(
-                                        f"{pad}{Colours.red}{switch_result.stderr.decode()}{Colours.clear}"
+                                        f"{self.pad}{Colours.red}{switch_result.stderr.decode()}{Colours.clear}"
                                     )
                                 else:
                                     current_branch = root_branch
 
                         if safe_to_delete:
                             self.logger.info(
-                                f"{pad2}Deleting local branch {branch_name}"
+                                f"{self.pad2}Deleting local branch {branch_name}"
                             )
                             del_result = self._delete_branch(branch_name, dir=dir)
                             if del_result.returncode != 0:
                                 self.logger.error(
-                                    f"{pad}{Colours.red}Unable to delete {branch_name}{Colours.clear}"
+                                    f"{self.pad}{Colours.red}Unable to delete {branch_name}{Colours.clear}"
                                 )
                                 self.logger.error(
-                                    f"{pad}{Colours.red}{del_result.stderr.decode()}{Colours.clear}"
+                                    f"{self.pad}{Colours.red}{del_result.stderr.decode()}{Colours.clear}"
                                 )
                 else:
                     self.logger.debug(
-                        f"{pad}{Colours.green}{branch_name} [up to date]{Colours.clear}"
+                        f"{self.pad}{Colours.green}{branch_name} [up to date]{Colours.clear}"
                     )
 
             if args.remote:
@@ -396,7 +414,7 @@ class GitGarden:
                         for b in local_branches
                     ]:
                         self.logger.info(
-                            f"{pad}{Colours.yellow}{basename} [remote only]{Colours.clear}"
+                            f"{self.pad}{Colours.yellow}{basename} [remote only]{Colours.clear}"
                         )
 
 
