@@ -9,7 +9,7 @@ from typing import List
 
 class GitGarden:
     """
-    GitGarden: A simple tool for automating a recursive scan of local git repos to display their status compared to their
+    A simple tool for automating a recursive scan of local git repos to display their status compared to their
     remote tracking branches with maintenance features such as fetching, pruning, deleting orphaned branches and
     fast-forwarding.
     """
@@ -86,6 +86,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Current branch name.
         """
+        # TODO: git branch --show-current
         current_branch = None
         local_branches_raw = subprocess.check_output(
             [shutil.which("git"), "--no-pager", "-C", dir, "branch"]

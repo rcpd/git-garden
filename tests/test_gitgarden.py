@@ -95,6 +95,7 @@ def test_fetch_and_purge(gg: GitGarden) -> None:
 
     gg.fetch(dir)
     assert len(gg.list_remote_branches(dir)) > 1  # FIXME
+    assert "main" in gg.list_local_branches(dir)  # FIXME: upstream vs not
 
 
 def test_git_garden(gg: GitGarden) -> None:
