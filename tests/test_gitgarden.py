@@ -1,7 +1,6 @@
 import pytest
 import logging
 import os
-import sys
 
 from git_garden import GitGarden
 from argparse import Namespace
@@ -53,17 +52,6 @@ def gg(logger: logging.Logger, args: Namespace) -> Generator[GitGarden, None, No
     :param args: Namespace object with pre-defined defaults.
     :yield: GitGarden instance.
     """
-    if not args.directory:
-        if sys.platform == "linux":
-            args.directory = "~"
-        else:
-            args.directory = r"D:\dev"
-
-    if args.quiet:
-        for handler in logger.handlers:
-            if type(handler) is logging.StreamHandler:
-                handler.setLevel(logging.INFO)
-
     yield GitGarden(logger, args)
 
 
@@ -111,12 +99,4 @@ def test_git_garden(gg: GitGarden) -> None:
     """
     # if GitGarden._check_git_status():
     #     pytest.skip("Test cannot be run while working tree is dirty.")
-    gg._main(
-        gg._get_dirs_with_depth(
-            os.path.expanduser(gg.args.directory),
-            gg.args.depth,
-            gg.args.include,
-            gg.args.exclude,
-        ),
-        gg.args,
-    )
+    gg._main(gg._get_dirs_with_depth(gg.args.directory, gg.args.depth))

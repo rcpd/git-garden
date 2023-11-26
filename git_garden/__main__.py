@@ -1,5 +1,4 @@
 import os
-import sys
 import argparse
 import logging
 
@@ -30,9 +29,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--directory",
+        default=os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ),
         type=str,
-        help="(Optional) Name of the directory to process "
-        "[Default: 'D:\dev' (Windows) or '~' (Linux)]",
+        help="(Optional) Name of the directory to process [Default: parent directory of project root]",
     )
     parser.add_argument(
         "--depth",
@@ -101,24 +102,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if not args.directory:
-        if sys.platform == "linux":
-            args.directory = "~"
-        else:
-            args.directory = r"D:\dev"
-
-    if args.quiet:
-        for handler in logger.handlers:
-            if type(handler) is logging.StreamHandler:
-                handler.setLevel(logging.INFO)
-
     gg = GitGarden(logger, args)
-    gg._main(
-        gg._get_dirs_with_depth(
-            os.path.expanduser(args.directory),
-            args.depth,
-            args.include,
-            args.exclude,
-        ),
-        args,
-    )
+    gg._main(gg._get_dirs_with_depth(gg.args.directory, gg.args.depth))

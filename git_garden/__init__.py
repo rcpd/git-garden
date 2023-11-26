@@ -27,29 +27,32 @@ class GitGarden:
             self.pad = f"{_pad}{dir}: "
             self.pad2 = f"{_pad}{_pad}{dir}: "
 
-    def _get_dirs_with_depth(
-        self, dir: str, depth: int, include: List[str], exclude: List[str]
-    ) -> List[str]:
+        if self.args.quiet:
+            for handler in self.logger.handlers:
+                if type(handler) is logging.StreamHandler:
+                    handler.setLevel(logging.INFO)
+
+    def _get_dirs_with_depth(self, dir: str, depth: int) -> List[str]:
         """
         Recursively search directories for git repos until a given depth.
 
         :param dir: Directory to search.
-        :param exclude: Filter results to exclude directories containing these sub-string(s).
         :param depth: Depth to search.
-        :param include: Filter results to only include directories containing these sub-string(s).
         :return: Directories containing git repos.
         """
+        dir = os.path.expanduser(dir)
+
         dirs = []
         if depth == 0:
             return dirs
 
         if os.path.isdir(dir):
             dir_base = os.path.basename(dir)
-            if dir_base in exclude:
+            if dir_base in self.args.exclude:
                 return dirs
             if ".git" in os.listdir(dir):
-                if include:
-                    if not any([i in dir_base for i in include]):
+                if self.args.include:
+                    if not any([i in dir_base for i in self.args.include]):
                         return dirs
                 dirs.append(dir)
 
@@ -58,7 +61,8 @@ class GitGarden:
             if os.path.isdir(item_path):
                 if depth > 1:
                     subdirs = self._get_dirs_with_depth(
-                        item_path, depth - 1, include, exclude
+                        item_path,
+                        depth - 1,
                     )
                     dirs.extend(subdirs)
         return dirs
@@ -194,19 +198,18 @@ class GitGarden:
                     ]
                 )
 
-    def _main(self, dirs: List[str], args: argparse.Namespace) -> None:
+    def _main(self, dirs: List[str]) -> None:
         """
         Execute the main logic of the script
 
         :param dirs: Directories containing git repos
-        :param args: Command line arguments
         """
         for dir in dirs:
-            if args.purge:
+            if self.args.purge:
                 self._purge_remote_branches(dir)
-            if args.no_fetch:
+            if self.args.no_fetch:
                 self.logger.debug(f"Scanning {dir}")
-            elif args.no_prune:
+            elif self.args.no_prune:
                 self.logger.debug(f"Fetching {dir}")
                 # not checking return code as errors are expected for non-repo folders
                 proc = subprocess.run(
@@ -220,7 +223,7 @@ class GitGarden:
                     capture_output=True,
                 )
 
-            if not args.no_fetch:
+            if not self.args.no_fetch:
                 if proc.stderr.decode().startswith("fatal: not a git repository"):
                     continue
 
@@ -274,11 +277,11 @@ class GitGarden:
                     f"{self.pad}{Colours.yellow}Unable to determine root branch{Colours.clear}"
                 )
             if root_branch is None or current_branch is None:
-                if args.ff:
+                if self.args.ff:
                     self.logger.warning(
                         f"{self.pad}{Colours.yellow}--ff will be skipped{Colours.clear}"
                     )
-                if args.delete:
+                if self.args.delete:
                     self.logger.warning(
                         f"{self.pad}{Colours.yellow}--delete will be skipped{Colours.clear}"
                     )
@@ -301,7 +304,7 @@ class GitGarden:
                     )
 
                 elif "[behind" in branch:
-                    if args.ff and branch_name == root_branch:
+                    if self.args.ff and branch_name == root_branch:
                         self.logger.info(
                             f"{self.pad}{Colours.yellow}{branch_name} {status}{Colours.clear}"
                         )
@@ -342,7 +345,7 @@ class GitGarden:
                     self.logger.info(
                         f"{self.pad}{Colours.red}{branch_name} [remote deleted]{Colours.clear}"
                     )
-                    if args.delete:
+                    if self.args.delete:
                         safe_to_delete = True
                         if current_branch == branch_name:
                             if self._check_git_status(dir):
@@ -395,7 +398,7 @@ class GitGarden:
                         f"{self.pad}{Colours.green}{branch_name} [up to date]{Colours.clear}"
                     )
 
-            if args.remote:
+            if self.args.remote:
                 for remote_branch in remote_branches:
                     if "/HEAD" in remote_branch:
                         continue
