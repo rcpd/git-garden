@@ -112,4 +112,13 @@ if __name__ == "__main__":
             if type(handler) is logging.StreamHandler:
                 handler.setLevel(logging.INFO)
 
-    GitGarden(logger, args)
+    gg = GitGarden(logger, args)
+    gg._main(
+        gg._get_dirs_with_depth(
+            os.path.expanduser(args.directory),
+            args.depth,
+            args.include,
+            args.exclude,
+        ),
+        args,
+    )

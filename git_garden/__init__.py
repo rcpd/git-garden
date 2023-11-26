@@ -18,20 +18,12 @@ class GitGarden:
     """
 
     def __init__(self, logger: logging.Logger, args: argparse.Namespace) -> None:
+        self.args = args
         self.logger = logger
-        self._main(
-            self._get_dirs_with_depth(
-                os.path.expanduser(args.directory),
-                args.depth,
-                args.include,
-                args.exclude,
-            ),
-            args,
-        )
-
         self.pad = _pad = "   "
         self.pad2 = _pad * 2
-        if args.quiet:
+
+        if self.args.quiet:
             self.pad = f"{_pad}{dir}: "
             self.pad2 = f"{_pad}{_pad}{dir}: "
 
@@ -71,8 +63,7 @@ class GitGarden:
                     dirs.extend(subdirs)
         return dirs
 
-    @staticmethod
-    def _parse_branches(stdout: bytes) -> List[str]:
+    def _parse_branches(self, stdout: bytes) -> List[str]:
         """
         Parse the output of a git branch command.
 
@@ -81,8 +72,7 @@ class GitGarden:
         """
         return stdout.decode().rstrip().split("\n")
 
-    @staticmethod
-    def _find_current_branch(dir: str) -> str:
+    def _find_current_branch(self, dir: str = ".") -> str:
         """
         Find the current branch name.
 
@@ -99,8 +89,7 @@ class GitGarden:
                 break
         return current_branch
 
-    @staticmethod
-    def _check_git_status(dir: str) -> bool:
+    def _check_git_status(self, dir: str = ".") -> bool:
         """
         Check status of git working directory.
 
@@ -119,8 +108,9 @@ class GitGarden:
         )
         return bool(git_status.stdout.decode())
 
-    @staticmethod
-    def _create_branch(branch_name: str, dir: str = ".") -> subprocess.CompletedProcess:
+    def _create_branch(
+        self, branch_name: str, dir: str = "."
+    ) -> subprocess.CompletedProcess:
         """
         Create a branch within a given git repo.
 
@@ -140,8 +130,9 @@ class GitGarden:
             capture_output=True,
         )
 
-    @staticmethod
-    def _delete_branch(branch_name: str, dir: str = ".") -> subprocess.CompletedProcess:
+    def _delete_branch(
+        self, branch_name: str, dir: str = "."
+    ) -> subprocess.CompletedProcess:
         """
         Delete a branch within a given git repo.
 
@@ -161,7 +152,7 @@ class GitGarden:
             capture_output=True,
         )
 
-    def _purge_remote_branches(self, dir: str) -> None:
+    def _purge_remote_branches(self, dir: str = ".") -> None:
         """
         Recursively purge all remote tracking branches from a given git repo.
 
@@ -212,7 +203,7 @@ class GitGarden:
         """
         for dir in dirs:
             if args.purge:
-                self._purge_remote_branches()
+                self._purge_remote_branches(dir)
             if args.no_fetch:
                 self.logger.debug(f"Scanning {dir}")
             elif args.no_prune:

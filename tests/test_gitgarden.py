@@ -1,7 +1,7 @@
 import pytest
 import logging
 import os
-import shutil
+import sys
 
 from git_garden import GitGarden
 from argparse import Namespace
@@ -9,7 +9,7 @@ from typing import Generator
 
 
 @pytest.fixture(scope="session")
-def logger() -> Generator[logging.Logger]:
+def logger() -> Generator[logging.Logger, None, None]:
     """
     Setup the test logger.
 
@@ -23,7 +23,7 @@ def logger() -> Generator[logging.Logger]:
 
 
 @pytest.fixture(scope="session")
-def args() -> Generator[Namespace]:
+def args() -> Generator[Namespace, None, None]:
     """
     Mimic the creation of the argparse.Namespace object with defaults.
 
@@ -44,46 +44,79 @@ def args() -> Generator[Namespace]:
     )
 
 
-def test_git_status() -> None:
+@pytest.fixture(scope="session")
+def gg(logger: logging.Logger, args: Namespace) -> Generator[GitGarden, None, None]:
+    """
+    Setup the default GitGarden instance the same way __main__.py does.
+
+    :param logger: Logger instance.
+    :param args: Namespace object with pre-defined defaults.
+    :yield: GitGarden instance.
+    """
+    if not args.directory:
+        if sys.platform == "linux":
+            args.directory = "~"
+        else:
+            args.directory = r"D:\dev"
+
+    if args.quiet:
+        for handler in logger.handlers:
+            if type(handler) is logging.StreamHandler:
+                handler.setLevel(logging.INFO)
+
+    yield GitGarden(logger, args)
+
+
+def test_git_status(gg: GitGarden) -> None:
     """
     Inject a change into the working tree and check that the status is dirty.
     Revert the change before attesting the state.
+
+    :param gg: GitGarden instance.
     """
     tmp_file = "test.tmp"
-    shutil.touch(tmp_file)
-    status = GitGarden._check_git_status()
+    with open(tmp_file, "w") as f:
+        f.write("")
+    status = gg._check_git_status()
     os.remove(tmp_file)
     assert status is True
 
 
-def test_branch_crud() -> None:
+def test_branch_crud(gg: GitGarden) -> None:
     """
     Test the creation and deletion of a branch.
+
+    :param gg: GitGarden instance.
     """
     branch = "test-branch"
-    assert GitGarden._create_branch(branch).returncode == 0
-    assert GitGarden._delete_branch(branch).returncode == 0
+    assert gg._create_branch(branch).returncode == 0
+    assert gg._delete_branch(branch).returncode == 0
 
 
-def test_git_garden_purge(logger: logging.Logger, args: Namespace) -> None:
+def test_git_garden_purge(gg: GitGarden) -> None:
     """
     Run GitGarden with --purge
 
-    :param logger: Logger to use for output.
-    :param args: Command line arguments.
+    :param gg: GitGarden instance.
     """
     args.purge = True
-    GitGarden(logger, args)
+    # TODO: function
 
 
-def test_git_garden(logger: logging.Logger, args: Namespace) -> None:
+def test_git_garden(gg: GitGarden) -> None:
     """
-    Run GitGarden with default arguments (limited to GitGarden repo).
+    Run GitGarden with default arguments (except limited to GitGarden repo).
 
-    :param logger: Logger to use for output.
-    :param args: Command line arguments.
+    :param gg: GitGarden instance.
     """
     # if GitGarden._check_git_status():
     #     pytest.skip("Test cannot be run while working tree is dirty.")
-
-    GitGarden(logger, args)
+    gg._main(
+        gg._get_dirs_with_depth(
+            os.path.expanduser(gg.args.directory),
+            gg.args.depth,
+            gg.args.include,
+            gg.args.exclude,
+        ),
+        gg.args,
+    )
