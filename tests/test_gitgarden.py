@@ -83,14 +83,18 @@ def test_branch_crud(gg: GitGarden) -> None:
     assert gg.delete_branch(branch).returncode == 0
 
 
-def test_git_garden_purge(gg: GitGarden) -> None:
+def test_fetch_and_purge(gg: GitGarden) -> None:
     """
     Run GitGarden with --purge.
 
     :param gg: GitGarden instance.
     """
-    args.purge = True
-    gg.purge_remote_branches(gg.args.directory)
+    dir = os.path.join(gg.args.directory, "git-garden")
+    gg.purge_remote_branches(dir)
+    assert gg.list_remote_branches(dir) == ['']  # FIXME
+
+    gg.fetch(dir)
+    assert len(gg.list_remote_branches(dir)) > 1  # FIXME
 
 
 def test_git_garden(gg: GitGarden) -> None:

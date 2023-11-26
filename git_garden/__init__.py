@@ -76,6 +76,7 @@ class GitGarden:
         :param stdout: Output of git branch command.
         :return: List of branches.
         """
+        # TODO: Remove any vestigial '' entries from the list
         return stdout.decode().rstrip().split("\n")
 
     def find_current_branch(self, dir: str = ".") -> str:
@@ -233,7 +234,7 @@ class GitGarden:
         for branch in self.list_remote_branches(dir):
             if branch == "origin":
                 continue
-            if branch:
+            if branch:  # FIXME
                 self.delete_branch(branch, dir=dir, remote=True)
 
     def fetch(self, dir: str = ".", prune: bool = True) -> subprocess.CompletedProcess:
@@ -283,7 +284,7 @@ class GitGarden:
             root_branch = None
 
             for branch in remote_branches:
-                if branch:
+                if branch:  # FIXME
                     if branch.split()[0] == "origin/master":
                         root_branch = "master"
                         break
@@ -293,7 +294,7 @@ class GitGarden:
 
             if root_branch is None:
                 for branch in local_branches:
-                    if branch:
+                    if branch:  # FIXME
                         if branch.split()[0] == "master":
                             root_branch = "master"
                             break
