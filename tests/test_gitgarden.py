@@ -29,7 +29,9 @@ def args() -> Generator[Namespace, None, None]:
     :yields: Namespace object with pre-defined defaults.
     """
     yield Namespace(
-        directory=r"D:\dev",
+        directory=os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ),
         depth=3,
         quiet=False,
         no_fetch=False,
@@ -65,7 +67,7 @@ def test_git_status(gg: GitGarden) -> None:
     tmp_file = "test.tmp"
     with open(tmp_file, "w") as f:
         f.write("")
-    status = gg._check_git_status()
+    status = gg.check_git_status()
     os.remove(tmp_file)
     assert status is True
 
@@ -77,18 +79,18 @@ def test_branch_crud(gg: GitGarden) -> None:
     :param gg: GitGarden instance.
     """
     branch = "test-branch"
-    assert gg._create_branch(branch).returncode == 0
-    assert gg._delete_branch(branch).returncode == 0
+    assert gg.create_branch(branch).returncode == 0
+    assert gg.delete_branch(branch).returncode == 0
 
 
 def test_git_garden_purge(gg: GitGarden) -> None:
     """
-    Run GitGarden with --purge
+    Run GitGarden with --purge.
 
     :param gg: GitGarden instance.
     """
     args.purge = True
-    # TODO: function
+    gg.purge_remote_branches(gg.args.directory)
 
 
 def test_git_garden(gg: GitGarden) -> None:
@@ -99,4 +101,4 @@ def test_git_garden(gg: GitGarden) -> None:
     """
     # if GitGarden._check_git_status():
     #     pytest.skip("Test cannot be run while working tree is dirty.")
-    gg._main(gg._get_dirs_with_depth(gg.args.directory, gg.args.depth))
+    gg.main(gg.get_dirs_with_depth(gg.args.directory, gg.args.depth))

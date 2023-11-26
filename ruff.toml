@@ -1,6 +1,13 @@
 [lint]
-# The defaults + ANN (flake8-annotations for typing)
-select = ["E4", "E7", "E9", "F", "ANN"]
+# The defaults + ANN (flake8-annotations for typing) + D (pydocstyle for docstrings)
+select = ["E4", "E7", "E9", "F", "ANN", "D"]
 
-# Ignore requirement for "self" refs to be typed (Self type not introduced until py3.11 [PEP 673])
-ignore = ["ANN101"]
+# ANN101: Ignore requirement for "self" refs to be typed (Self type not introduced until py3.11 [PEP 673])
+# D100 flags on lots of non-module code
+# D101/D104 better reserved for class descriptions so they are included in Sphinx docs
+# D200, D401, D404 precludes different comment styles
+# D203/204/211 is a choice (space after class docstring or not)
+# D205 Sphinx lines are interpreted as "description" field
+# D212 vs D213 is a choice (doc string begins on first or second line)
+# D400 vs D415 is a choice (line is terminated by period or other punctuation)
+ignore = ["ANN101", "D100", "D101", "D104", "D200", "D203", "D204", "D205", "D212", "D400", "D401", "D404"]

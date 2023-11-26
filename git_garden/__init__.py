@@ -9,15 +9,17 @@ from typing import List
 
 class GitGarden:
     """
-    A simple tool for automating a recursive scan of local git repos to display their status compared to their remote
-    tracking branches with maintenance features such as fetching, pruning, deleting orphaned branches and
+    GitGarden: A simple tool for automating a recursive scan of local git repos to display their status compared to their
+    remote tracking branches with maintenance features such as fetching, pruning, deleting orphaned branches and
     fast-forwarding.
-
-    :param logger: Logger to use for output.
-    :param args: Command line arguments.
     """
-
     def __init__(self, logger: logging.Logger, args: argparse.Namespace) -> None:
+        """
+        Pre-process the command line arguments.
+
+        :param logger: Logger to use for output.
+        :param args: Command line arguments.
+        """
         self.args = args
         self.logger = logger
         self.pad = _pad = "   "
@@ -32,7 +34,7 @@ class GitGarden:
                 if type(handler) is logging.StreamHandler:
                     handler.setLevel(logging.INFO)
 
-    def _get_dirs_with_depth(self, dir: str, depth: int) -> List[str]:
+    def get_dirs_with_depth(self, dir: str, depth: int) -> List[str]:
         """
         Recursively search directories for git repos until a given depth.
 
@@ -60,14 +62,14 @@ class GitGarden:
             item_path = os.path.join(dir, item)
             if os.path.isdir(item_path):
                 if depth > 1:
-                    subdirs = self._get_dirs_with_depth(
+                    subdirs = self.get_dirs_with_depth(
                         item_path,
                         depth - 1,
                     )
                     dirs.extend(subdirs)
         return dirs
 
-    def _parse_branches(self, stdout: bytes) -> List[str]:
+    def parse_branches(self, stdout: bytes) -> List[str]:
         """
         Parse the output of a git branch command.
 
@@ -76,7 +78,7 @@ class GitGarden:
         """
         return stdout.decode().rstrip().split("\n")
 
-    def _find_current_branch(self, dir: str = ".") -> str:
+    def find_current_branch(self, dir: str = ".") -> str:
         """
         Find the current branch name.
 
@@ -93,7 +95,7 @@ class GitGarden:
                 break
         return current_branch
 
-    def _check_git_status(self, dir: str = ".") -> bool:
+    def check_git_status(self, dir: str = ".") -> bool:
         """
         Check status of git working directory.
 
@@ -112,7 +114,7 @@ class GitGarden:
         )
         return bool(git_status.stdout.decode())
 
-    def _create_branch(
+    def create_branch(
         self, branch_name: str, dir: str = "."
     ) -> subprocess.CompletedProcess:
         """
@@ -134,119 +136,152 @@ class GitGarden:
             capture_output=True,
         )
 
-    def _delete_branch(
-        self, branch_name: str, dir: str = "."
+    def delete_branch(
+        self, branch_name: str, dir: str = ".", remote: bool = False
     ) -> subprocess.CompletedProcess:
         """
         Delete a branch within a given git repo.
 
         :param dir: Current directory being processed.
         :param branch_name: Branch to delete.
+        :param remote: If set delete a remote tracking branch, otherwise delete the local branch.
         :return: CompletedProcess result from branch deletion.
         """
-        return subprocess.run(
-            [
-                shutil.which("git"),
-                "-C",
-                dir,
-                "branch",
-                "-D",
-                branch_name,
-            ],
-            capture_output=True,
+        if remote:
+            self.logger.debug(
+                f"{self.pad}Deleting remote tracking branch: {branch_name}"
+            )
+            return subprocess.check_call(
+                [
+                    shutil.which("git"),
+                    "-C",
+                    dir,
+                    "branch",
+                    "-r",
+                    "-D",
+                    branch_name,
+                ]
+            )
+        else:
+            self.logger.info(f"{self.pad2}Deleting local branch {branch_name}")
+            return subprocess.run(
+                [
+                    shutil.which("git"),
+                    "-C",
+                    dir,
+                    "branch",
+                    "-D",
+                    branch_name,
+                ],
+                capture_output=True,
+            )
+
+    def list_remote_branches(self, dir: str = ".") -> List[str]:
+        """
+        List remote branches.
+
+        :param dir: Current directory being processed.
+        :return: List of remote branches.
+        """
+        return self.parse_branches(
+            subprocess.check_output(
+                [
+                    shutil.which("git"),
+                    "--no-pager",
+                    "-C",
+                    dir,
+                    "branch",
+                    "--list",
+                    "-r",
+                    "origin/*",
+                    "--format",
+                    "%(refname:short)",
+                ]
+            )
         )
 
-    def _purge_remote_branches(self, dir: str = ".") -> None:
+    def list_local_branches(self, dir: str = ".") -> List[str]:
+        """
+        List local branches.
+
+        :param dir: Current directory being processed.
+        :return: List of local branches.
+        """
+        return self.parse_branches(
+            subprocess.check_output(
+                [
+                    shutil.which("git"),
+                    "--no-pager",
+                    "-C",
+                    dir,
+                    "branch",
+                    "--format",
+                    "'%(refname:short) %(upstream:short) %(upstream:track)'",
+                ]
+            )
+        )
+
+    def purge_remote_branches(self, dir: str = ".") -> None:
         """
         Recursively purge all remote tracking branches from a given git repo.
 
         :param dir: Current directory being processed.
         """
         self.logger.info(f"Purging ALL remote tracking branches from {dir}")
-        proc = subprocess.check_output(
-            [
-                shutil.which("git"),
-                "--no-pager",
-                "-C",
-                dir,
-                "branch",
-                "--list",
-                "-r",
-                "origin/*",
-                "--format",
-                "%(refname:short)",
-            ]
-        )
 
         # trying to batch the delete without rate limiting will crash git on very large repos
-        for branch in self._parse_branches(proc):
+        for branch in self.list_remote_branches(dir):
             if branch == "origin":
                 continue
             if branch:
-                self.logger.debug(
-                    f"{self.pad}Deleting remote tracking branch: {branch}"
-                )
-                subprocess.check_call(
-                    [
-                        shutil.which("git"),
-                        "-C",
-                        dir,
-                        "branch",
-                        "-r",
-                        "-D",
-                        branch,
-                    ]
-                )
+                self.delete_branch(branch, dir=dir, remote=True)
 
-    def _main(self, dirs: List[str]) -> None:
+    def fetch(self, dir: str = ".", prune: bool = True) -> subprocess.CompletedProcess:
         """
-        Execute the main logic of the script
+        Fetch (and optionally prune) remote tracking branches from a given git repo.
 
-        :param dirs: Directories containing git repos
+        :param dir: Current directory being processed.
+        :param prune: If set prune remote tracking branches, otherwise fetch only.
+        :return: CompletedProcess result from fetch.
+        """
+        # not checking return code as errors are expected for non-repo folders
+        if prune:
+            self.logger.debug(f"Fetching & pruning {dir}")
+
+            return subprocess.run(
+                [shutil.which("git"), "-C", dir, "fetch", "--prune"],
+                capture_output=True,
+            )
+        else:
+            self.logger.debug(f"Fetching {dir}")
+            return subprocess.run(
+                [shutil.which("git"), "-C", dir, "fetch"], capture_output=True
+            )
+
+    def main(self, dirs: List[str]) -> None:
+        """
+        Execute the main logic of the script.
+
+        :param dirs: Directories containing git repos.
         """
         for dir in dirs:
             if self.args.purge:
-                self._purge_remote_branches(dir)
+                self.purge_remote_branches(dir)
             if self.args.no_fetch:
                 self.logger.debug(f"Scanning {dir}")
             elif self.args.no_prune:
-                self.logger.debug(f"Fetching {dir}")
-                # not checking return code as errors are expected for non-repo folders
-                proc = subprocess.run(
-                    [shutil.which("git"), "-C", dir, "fetch"], capture_output=True
-                )
+                proc = self.fetch(dir, prune=False)
             else:
-                self.logger.debug(f"Fetching & pruning {dir}")
-                # not checking return code as errors are expected for non-repo folders
-                proc = subprocess.run(
-                    [shutil.which("git"), "-C", dir, "fetch", "--prune"],
-                    capture_output=True,
-                )
+                proc = self.fetch(dir)
 
             if not self.args.no_fetch:
                 if proc.stderr.decode().startswith("fatal: not a git repository"):
                     continue
 
-            local_branches = self._parse_branches(
-                subprocess.check_output(
-                    [
-                        shutil.which("git"),
-                        "--no-pager",
-                        "-C",
-                        dir,
-                        "branch",
-                        "--format",
-                        "'%(refname:short) %(upstream:short) %(upstream:track)'",
-                    ]
-                )
-            )
-
-            remote_branches = self._parse_branches(
-                subprocess.check_output(
-                    [shutil.which("git"), "--no-pager", "-C", dir, "branch", "--remote"]
-                )
-            )
+            local_branches = self.list_local_branches(dir)
+            remote_branches = self.list_remote_branches(dir)
             root_branch = None
+
             for branch in remote_branches:
                 if branch:
                     if branch.split()[0] == "origin/master":
@@ -266,7 +301,7 @@ class GitGarden:
                             root_branch = "main"
                             break
 
-            current_branch = self._find_current_branch(dir)
+            current_branch = self.find_current_branch(dir)
 
             if current_branch is None:
                 self.logger.warning(
@@ -348,7 +383,7 @@ class GitGarden:
                     if self.args.delete:
                         safe_to_delete = True
                         if current_branch == branch_name:
-                            if self._check_git_status(dir):
+                            if self.check_git_status(dir):
                                 safe_to_delete = False
                                 self.logger.warning(
                                     f"{self.pad2}{Colours.yellow}Switching precluded by uncommitted changes on "
@@ -382,10 +417,7 @@ class GitGarden:
                                     current_branch = root_branch
 
                         if safe_to_delete:
-                            self.logger.info(
-                                f"{self.pad2}Deleting local branch {branch_name}"
-                            )
-                            del_result = self._delete_branch(branch_name, dir=dir)
+                            del_result = self.delete_branch(branch_name, dir=dir)
                             if del_result.returncode != 0:
                                 self.logger.error(
                                     f"{self.pad}{Colours.red}Unable to delete {branch_name}{Colours.clear}"
@@ -415,16 +447,16 @@ class GitGarden:
 class CustomFormatter(logging.Formatter):
     """
     Custom formatter for logging, allowing parsing of log messages.
-
-    This formatter extends the base logging.Formatter and provides a method
-    for custom parsing of log messages before they are emitted.
-
-    :param fmt: The format string for the log message.
-    :param datefmt: The format string for the date in the log message.
-    :param style: The formatting style ('%' or '{' style).
     """
-
     def __init__(self, fmt: str, datefmt: str = None, style: str = "{") -> None:
+        """
+        This formatter extends the base logging.Formatter and provides a method
+        for custom parsing of log messages before they are emitted.
+
+        :param fmt: The format string for the log message.
+        :param datefmt: The format string for the date in the log message.
+        :param style: The formatting style ('%' or '{' style).
+        """
         super().__init__(fmt, datefmt, style)
 
     def format(self, record: logging.LogRecord) -> str:
@@ -455,10 +487,9 @@ class CustomFormatter(logging.Formatter):
 
 class Colours:
     """
-    May require calling os.system("color") to enable ANSI codes on Windows
-    Colour table: https://stackoverflow.com/a/21786287/10639133
+    May require calling os.system("color") to enable ANSI codes on Windows.
+    Colour table: https://stackoverflow.com/a/21786287/10639133.
     """
-
     yellow = "\x1b[0;33;40m"
     red = "\x1b[0;31;40m"
     green = "\x1b[0;32;40m"

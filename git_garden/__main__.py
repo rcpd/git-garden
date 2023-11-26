@@ -103,4 +103,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     gg = GitGarden(logger, args)
-    gg._main(gg._get_dirs_with_depth(gg.args.directory, gg.args.depth))
+    gg.main(gg.get_dirs_with_depth(gg.args.directory, gg.args.depth))

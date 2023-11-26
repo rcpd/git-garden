@@ -5,3 +5,4 @@ Git-Garden
    :members:
    :undoc-members:
    :private-members:
+   :special-members:
