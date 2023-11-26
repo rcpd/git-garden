@@ -5,4 +5,4 @@ Git-Garden
    :members:
    :undoc-members:
    :private-members:
-   :special-members:
+   :special-members: __init__
