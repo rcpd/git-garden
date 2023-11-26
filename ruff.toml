@@ -1,0 +1,6 @@
+[lint]
+# The defaults + ANN (flake8-annotations for typing)
+select = ["E4", "E7", "E9", "F", "ANN"]
+
+# Ignore requirement for "self" refs to be typed (Self type not introduced until py3.11 [PEP 673])
+ignore = ["ANN101"]

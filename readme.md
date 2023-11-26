@@ -63,7 +63,7 @@ git push origin --delete temp temp2 temp3 temp4 # cleanup
 ruff format .
 ruff check . --fix
 
-# tests + ruff (r/o)
+# linting + tests (r/o)
 tox
 
 # Generate Documentation
