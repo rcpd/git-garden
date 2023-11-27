@@ -74,8 +74,11 @@ class GitGarden:
         :param stdout: Output of git branch command.
         :return: List of branches.
         """
-        # TODO: Remove any vestigial '' entries from the list
-        return stdout.decode().rstrip().split("\n")
+        # strip current branch marker & padding
+        # drop the last element which is always empty
+        return [
+            branch.strip().replace("* ", "") for branch in stdout.decode().split("\n")
+        ][:-1]
 
     def find_current_branch(self, dir: str = ".") -> str:
         """
@@ -176,13 +179,31 @@ class GitGarden:
                 capture_output=True,
             )
 
-    def list_remote_branches(self, dir: str = ".") -> List[str]:
+    def list_remote_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
         """
         List remote branches.
 
         :param dir: Current directory being processed.
+        :param upstream: If set include upstream branch status.
         :return: List of remote branches.
         """
+        if upstream:
+            return self.parse_branches(
+                subprocess.check_output(
+                    [
+                        shutil.which("git"),
+                        "--no-pager",
+                        "-C",
+                        dir,
+                        "branch",
+                        "--list",
+                        "-r",
+                        "origin/*",
+                        "--format",
+                        "'%(refname:short) %(upstream:short) %(upstream:track)'",
+                    ]
+                )
+            )
         return self.parse_branches(
             subprocess.check_output(
                 [
@@ -194,8 +215,6 @@ class GitGarden:
                     "--list",
                     "-r",
                     "origin/*",
-                    "--format",
-                    "%(refname:short)",
                 ]
             )
         )
@@ -208,19 +227,26 @@ class GitGarden:
         :param upstream: If set include upstream branch status.
         :return: List of local branches.
         """
-        return self.parse_branches(
-            subprocess.check_output(
-                [
-                    shutil.which("git"),
-                    "--no-pager",
-                    "-C",
-                    dir,
-                    "branch",
-                    "--format",
-                    "'%(refname:short) %(upstream:short) %(upstream:track)'",
-                ]
+        if upstream:
+            return self.parse_branches(
+                subprocess.check_output(
+                    [
+                        shutil.which("git"),
+                        "--no-pager",
+                        "-C",
+                        dir,
+                        "branch",
+                        "--format",
+                        "'%(refname:short) %(upstream:short) %(upstream:track)'",
+                    ]
+                )
             )
-        )
+        else:
+            return self.parse_branches(
+                subprocess.check_output(
+                    [shutil.which("git"), "--no-pager", "-C", dir, "branch"]
+                )
+            )
 
     def purge_remote_branches(self, dir: str = ".") -> None:
         """
@@ -234,8 +260,7 @@ class GitGarden:
         for branch in self.list_remote_branches(dir):
             if branch == "origin":
                 continue
-            if branch:  # FIXME
-                self.delete_branch(branch, dir=dir, remote=True)
+            self.delete_branch(branch, dir=dir, remote=True)
 
     def fetch(self, dir: str = ".", prune: bool = True) -> subprocess.CompletedProcess:
         """
@@ -284,23 +309,21 @@ class GitGarden:
             root_branch = None
 
             for branch in remote_branches:
-                if branch:  # FIXME
-                    if branch.split()[0] == "origin/master":
-                        root_branch = "master"
-                        break
-                    elif branch.split()[0] == "origin/main":
-                        root_branch = "main"
-                        break
+                if branch.split()[0] == "origin/master":
+                    root_branch = "master"
+                    break
+                elif branch.split()[0] == "origin/main":
+                    root_branch = "main"
+                    break
 
             if root_branch is None:
                 for branch in local_branches:
-                    if branch:  # FIXME
-                        if branch.split()[0] == "master":
-                            root_branch = "master"
-                            break
-                        elif branch.split()[0] == "main":
-                            root_branch = "main"
-                            break
+                    if branch.split()[0] == "master":
+                        root_branch = "master"
+                        break
+                    elif branch.split()[0] == "main":
+                        root_branch = "main"
+                        break
 
             current_branch = self.find_current_branch(dir)
 

@@ -83,6 +83,17 @@ def test_branch_crud(gg: GitGarden) -> None:
     assert gg.delete_branch(branch).returncode == 0
 
 
+def test_list_branches(gg: GitGarden) -> None:
+    """
+    Test the listing of branches.
+
+    :param gg: GitGarden instance.
+    """
+    dir = os.path.join(gg.args.directory, "git-garden")
+    assert "main" in gg.list_local_branches(dir)
+    assert "origin/main" in gg.list_remote_branches(dir)
+
+
 def test_fetch_and_purge(gg: GitGarden) -> None:
     """
     Run GitGarden with --purge.
@@ -91,11 +102,11 @@ def test_fetch_and_purge(gg: GitGarden) -> None:
     """
     dir = os.path.join(gg.args.directory, "git-garden")
     gg.purge_remote_branches(dir)
-    assert gg.list_remote_branches(dir) == [""]  # FIXME
+    assert gg.list_remote_branches(dir) == []
 
-    gg.fetch(dir)
-    assert len(gg.list_remote_branches(dir)) > 1  # FIXME
-    assert "main" in gg.list_local_branches(dir)  # FIXME: upstream vs not
+    gg.fetch(dir)  # restore remote branches
+    assert "main" in gg.list_local_branches(dir)
+    assert "origin/main" in gg.list_remote_branches(dir)
 
 
 def test_git_garden(gg: GitGarden) -> None:
