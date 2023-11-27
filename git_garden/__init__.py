@@ -87,16 +87,43 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Current branch name.
         """
-        # TODO: git branch --show-current
-        current_branch = None
         local_branches_raw = subprocess.check_output(
-            [shutil.which("git"), "--no-pager", "-C", dir, "branch"]
+            [shutil.which("git"), "-C", dir, "branch", "--show-current"]
         )
-        for branch in local_branches_raw.decode().split("\n"):
-            if branch.startswith("*"):
-                current_branch = branch.split()[-1]
-                break
-        return current_branch
+        return local_branches_raw.decode().replace("\n", "")
+
+    def find_root_branch(self, local_branches: List[str], remote_branches: List[str]) -> str:
+        """
+        Attempt to find the root branch (master or main) for a given git repo.
+
+        :param local_branches: List of local branches.
+        :param remote_branches: List of remote branches.
+        :return: Root branch name.
+        """
+        root_branch = None
+        for branch in remote_branches:
+                if branch.split()[0] == "origin/master":
+                    root_branch = "master"
+                    break
+                elif branch.split()[0] == "origin/main":
+                    root_branch = "main"
+                    break
+
+        if root_branch is None:
+            for branch in local_branches:
+                if branch.split()[0] == "master":
+                    root_branch = "master"
+                    break
+                elif branch.split()[0] == "main":
+                    root_branch = "main"
+                    break
+
+        if root_branch is None:
+            self.logger.warning(
+                f"{self.pad}{Colours.yellow}Unable to determine root branch{Colours.clear}"
+            )
+ 
+        return root_branch
 
     def check_git_status(self, dir: str = ".") -> bool:
         """
@@ -306,35 +333,9 @@ class GitGarden:
 
             local_branches = self.list_local_branches(dir)
             remote_branches = self.list_remote_branches(dir)
-            root_branch = None
-
-            for branch in remote_branches:
-                if branch.split()[0] == "origin/master":
-                    root_branch = "master"
-                    break
-                elif branch.split()[0] == "origin/main":
-                    root_branch = "main"
-                    break
-
-            if root_branch is None:
-                for branch in local_branches:
-                    if branch.split()[0] == "master":
-                        root_branch = "master"
-                        break
-                    elif branch.split()[0] == "main":
-                        root_branch = "main"
-                        break
-
+            root_branch = self.find_root_branch(local_branches, remote_branches)
             current_branch = self.find_current_branch(dir)
 
-            if current_branch is None:
-                self.logger.warning(
-                    f"{self.pad}{Colours.yellow}Unable to determine current branch{Colours.clear}"
-                )
-            if root_branch is None:
-                self.logger.warning(
-                    f"{self.pad}{Colours.yellow}Unable to determine root branch{Colours.clear}"
-                )
             if root_branch is None or current_branch is None:
                 if self.args.ff:
                     self.logger.warning(

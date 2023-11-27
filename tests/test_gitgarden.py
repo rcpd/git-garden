@@ -6,6 +6,7 @@ from git_garden import GitGarden
 from argparse import Namespace
 from typing import Generator
 
+# TODO: get_dirs_with_depth
 
 @pytest.fixture(scope="session")
 def logger() -> Generator[logging.Logger, None, None]:
@@ -57,6 +58,17 @@ def gg(logger: logging.Logger, args: Namespace) -> Generator[GitGarden, None, No
     yield GitGarden(logger, args)
 
 
+@pytest.fixture(scope="session")
+def dir(gg: GitGarden) -> Generator[str, None, None]:
+    """
+    Path to the git-garden directory.
+
+    :param gg: GitGarden instance.
+    :yield: Path to the git-garden directory.
+    """
+    yield os.path.join(gg.args.directory, "git-garden")
+
+
 def test_git_status(gg: GitGarden) -> None:
     """
     Inject a change into the working tree and check that the status is dirty.
@@ -83,24 +95,35 @@ def test_branch_crud(gg: GitGarden) -> None:
     assert gg.delete_branch(branch).returncode == 0
 
 
-def test_list_branches(gg: GitGarden) -> None:
+def test_list_branches(gg: GitGarden, dir: str) -> None:
     """
     Test the listing of branches.
-
+    
     :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
     """
     dir = os.path.join(gg.args.directory, "git-garden")
     assert "main" in gg.list_local_branches(dir)
     assert "origin/main" in gg.list_remote_branches(dir)
 
 
-def test_fetch_and_purge(gg: GitGarden) -> None:
+def test_find_root_branch(gg: GitGarden, dir: str) -> None:
+    """
+    Test the finding of the root branch.
+
+    :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
+    """
+    assert gg.find_root_branch(gg.list_local_branches(dir), gg.list_remote_branches(dir)) == "main"
+
+
+def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
     """
     Run GitGarden with --purge.
 
     :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
     """
-    dir = os.path.join(gg.args.directory, "git-garden")
     gg.purge_remote_branches(dir)
     assert gg.list_remote_branches(dir) == []
 
