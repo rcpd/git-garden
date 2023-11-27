@@ -104,6 +104,7 @@ def test_list_branches(gg: GitGarden, dir: str) -> None:
     """
     dir = os.path.join(gg.args.directory, "git-garden")
     assert "main" in gg.list_local_branches(dir)
+    assert "main origin/main" in gg.list_local_branches(dir, upstream=True)
     assert "origin/main" in gg.list_remote_branches(dir)
 
 

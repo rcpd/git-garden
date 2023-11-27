@@ -67,18 +67,22 @@ class GitGarden:
                     dirs.extend(subdirs)
         return dirs
 
-    def parse_branches(self, stdout: bytes) -> List[str]:
+    def parse_branches(self, stdout: bytes, upstream: bool = False) -> List[str]:
         """
         Parse the output of a git branch command.
 
         :param stdout: Output of git branch command.
+        :param upstream: Branches include upstream status.
         :return: List of branches.
         """
         # strip current branch marker & padding
         # drop the last element which is always empty
-        return [
-            branch.strip().replace("* ", "") for branch in stdout.decode().split("\n")
+        branches = [branch.strip().replace("* ", "") for branch in stdout.decode().split("\n")
         ][:-1]
+        if upstream:
+            return [branch[1:-2] for branch in branches]  # trim additional padding/quote
+        else:
+            return branches
 
     def find_current_branch(self, dir: str = ".") -> str:
         """
@@ -266,7 +270,8 @@ class GitGarden:
                         "--format",
                         "'%(refname:short) %(upstream:short) %(upstream:track)'",
                     ]
-                )
+                ),
+                upstream=upstream
             )
         else:
             return self.parse_branches(
@@ -332,7 +337,11 @@ class GitGarden:
                     continue
 
             local_branches = self.list_local_branches(dir)
+            local_branches_status = self.list_local_branches(dir, upstream=True)
+
             remote_branches = self.list_remote_branches(dir)
+            remote_branches_status = self.list_remote_branches(dir, upstream=True)
+
             root_branch = self.find_root_branch(local_branches, remote_branches)
             current_branch = self.find_current_branch(dir)
 
@@ -346,7 +355,7 @@ class GitGarden:
                         f"{self.pad}{Colours.yellow}--delete will be skipped{Colours.clear}"
                     )
 
-            for branch in local_branches:
+            for branch in local_branches_status:
                 branch_name = branch.split()[0].replace("'", "", 1)
                 status = "[" + branch.split("[")[-1].replace("'", "")
 
@@ -462,7 +471,7 @@ class GitGarden:
                     basename = remote_branch.split("origin/")[-1]
                     if basename not in [
                         b.split()[0].rstrip().replace("'", "", 1)
-                        for b in local_branches
+                        for b in local_branches_status
                     ]:
                         self.logger.info(
                             f"{self.pad}{Colours.yellow}{basename} [remote only]{Colours.clear}"
