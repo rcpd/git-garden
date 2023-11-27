@@ -91,7 +91,7 @@ def test_fetch_and_purge(gg: GitGarden) -> None:
     """
     dir = os.path.join(gg.args.directory, "git-garden")
     gg.purge_remote_branches(dir)
-    assert gg.list_remote_branches(dir) == ['']  # FIXME
+    assert gg.list_remote_branches(dir) == [""]  # FIXME
 
     gg.fetch(dir)
     assert len(gg.list_remote_branches(dir)) > 1  # FIXME

@@ -13,7 +13,7 @@ setup(
             "tox",
             "pytest",
             "pytest-cov",
-            "darglint",
+            "pydoclint",
         ]
     },
 )

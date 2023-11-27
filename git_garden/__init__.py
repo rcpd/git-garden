@@ -12,14 +12,12 @@ class GitGarden:
     A simple tool for automating a recursive scan of local git repos to display their status compared to their
     remote tracking branches with maintenance features such as fetching, pruning, deleting orphaned branches and
     fast-forwarding.
-    """
-    def __init__(self, logger: logging.Logger, args: argparse.Namespace) -> None:
-        """
-        Pre-process the command line arguments.
 
-        :param logger: Logger to use for output.
-        :param args: Command line arguments.
-        """
+    :param logger: Logger to use for output.
+    :param args: Command line arguments.
+    """
+
+    def __init__(self, logger: logging.Logger, args: argparse.Namespace) -> None:
         self.args = args
         self.logger = logger
         self.pad = _pad = "   "
@@ -144,8 +142,8 @@ class GitGarden:
         """
         Delete a branch within a given git repo.
 
-        :param dir: Current directory being processed.
         :param branch_name: Branch to delete.
+        :param dir: Current directory being processed.
         :param remote: If set delete a remote tracking branch, otherwise delete the local branch.
         :return: CompletedProcess result from branch deletion.
         """
@@ -448,17 +446,15 @@ class GitGarden:
 
 class CustomFormatter(logging.Formatter):
     """
-    Custom formatter for logging, allowing parsing of log messages.
-    """
-    def __init__(self, fmt: str, datefmt: str = None, style: str = "{") -> None:
-        """
-        This formatter extends the base logging.Formatter and provides a method
-        for custom parsing of log messages before they are emitted.
+    This formatter extends the base logging.Formatter and provides a method for custom parsing of log messages before
+    they are emitted.
 
-        :param fmt: The format string for the log message.
-        :param datefmt: The format string for the date in the log message.
-        :param style: The formatting style ('%' or '{' style).
-        """
+    :param fmt: The format string for the log message.
+    :param datefmt: The format string for the date in the log message.
+    :param style: The formatting style ('%' or '{' style).
+    """
+
+    def __init__(self, fmt: str, datefmt: str = None, style: str = "{") -> None:
         super().__init__(fmt, datefmt, style)
 
     def format(self, record: logging.LogRecord) -> str:
@@ -492,6 +488,7 @@ class Colours:
     May require calling os.system("color") to enable ANSI codes on Windows.
     Colour table: https://stackoverflow.com/a/21786287/10639133.
     """
+
     yellow = "\x1b[0;33;40m"
     red = "\x1b[0;31;40m"
     green = "\x1b[0;32;40m"

@@ -1,0 +1,19 @@
+[tool.pytest.ini_options]
+addopts = "-s"
+
+[tool.ruff]
+# The defaults + ANN (flake8-annotations for typing)
+select = ["E4", "E7", "E9", "F", "ANN"]
+
+# ANN101: Ignore requirement for "self" refs to be typed (Self type not introduced until py3.11 [PEP 673])
+ignore = ["ANN101", ] 
+target-version = "py37" # not needed if your pyproject.toml has `project.requires-python`
+
+[tool.pydoclint]
+style = "sphinx"
+exclude = "venv|.tox|.git"
+
+# these are enforced as being provided through typing the signature elsewhere
+arg-type-hints-in-docstring = false
+check-return-types = false
+check-yield-types = false
