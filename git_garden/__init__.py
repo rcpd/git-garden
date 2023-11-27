@@ -32,7 +32,7 @@ class GitGarden:
                 if type(handler) is logging.StreamHandler:
                     handler.setLevel(logging.INFO)
 
-    def get_dirs_with_depth(self, dir: str, depth: int) -> List[str]:
+    def get_dirs_with_depth(self, dir: str, depth: int = 3) -> List[str]:
         """
         Recursively search directories for git repos until a given depth.
 
@@ -77,10 +77,13 @@ class GitGarden:
         """
         # strip current branch marker & padding
         # drop the last element which is always empty
-        branches = [branch.strip().replace("* ", "") for branch in stdout.decode().split("\n")
+        branches = [
+            branch.strip().replace("* ", "") for branch in stdout.decode().split("\n")
         ][:-1]
         if upstream:
-            return [branch[1:-2] for branch in branches]  # trim additional padding/quote
+            return [
+                branch[1:-2] for branch in branches
+            ]  # trim additional padding/quote
         else:
             return branches
 
@@ -96,7 +99,9 @@ class GitGarden:
         )
         return local_branches_raw.decode().replace("\n", "")
 
-    def find_root_branch(self, local_branches: List[str], remote_branches: List[str]) -> str:
+    def find_root_branch(
+        self, local_branches: List[str], remote_branches: List[str]
+    ) -> str:
         """
         Attempt to find the root branch (master or main) for a given git repo.
 
@@ -106,12 +111,12 @@ class GitGarden:
         """
         root_branch = None
         for branch in remote_branches:
-                if branch.split()[0] == "origin/master":
-                    root_branch = "master"
-                    break
-                elif branch.split()[0] == "origin/main":
-                    root_branch = "main"
-                    break
+            if branch.split()[0] == "origin/master":
+                root_branch = "master"
+                break
+            elif branch.split()[0] == "origin/main":
+                root_branch = "main"
+                break
 
         if root_branch is None:
             for branch in local_branches:
@@ -126,7 +131,7 @@ class GitGarden:
             self.logger.warning(
                 f"{self.pad}{Colours.yellow}Unable to determine root branch{Colours.clear}"
             )
- 
+
         return root_branch
 
     def check_git_status(self, dir: str = ".") -> bool:
@@ -136,50 +141,43 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Working directory is clean (False) or dirty (True).
         """
-        git_status = subprocess.run(
+        git_status = subprocess.check_output(
             [
                 shutil.which("git"),
                 "-C",
                 dir,
                 "status",
                 "--porcelain",
-            ],
-            capture_output=True,
+            ]
         )
-        return bool(git_status.stdout.decode())
+        return bool(git_status.decode())
 
     def create_branch(
-        self, branch_name: str, dir: str = "."
-    ) -> subprocess.CompletedProcess:
+        self, branch_name: str, root_branch: str = "main", dir: str = "."
+    ) -> int:
         """
         Create a branch within a given git repo.
 
         :param branch_name: Name of the branch to create.
+        :param root_branch: Root branch to create from.
         :param dir: Current directory being processed.
-        :return: CompletedProcess result from branch creation.
+        :return: Exit code from branch creation.
         """
-        return subprocess.run(
-            [
-                shutil.which("git"),
-                "-C",
-                dir,
-                "branch",
-                "-c",
-                branch_name,
-            ],
-            capture_output=True,
+        return subprocess.check_call(
+            [shutil.which("git"), "-C", dir, "branch", branch_name, root_branch]
         )
 
+    # TODO: delete remote branch
     def delete_branch(
         self, branch_name: str, dir: str = ".", remote: bool = False
-    ) -> subprocess.CompletedProcess:
+    ) -> int:
         """
         Delete a branch within a given git repo.
 
         :param branch_name: Branch to delete.
         :param dir: Current directory being processed.
         :param remote: If set delete a remote tracking branch, otherwise delete the local branch.
-        :return: CompletedProcess result from branch deletion.
+        :return: Exit code from branch creation.
         """
         if remote:
             self.logger.debug(
@@ -198,7 +196,7 @@ class GitGarden:
             )
         else:
             self.logger.info(f"{self.pad2}Deleting local branch {branch_name}")
-            return subprocess.run(
+            return subprocess.check_call(
                 [
                     shutil.which("git"),
                     "-C",
@@ -206,8 +204,7 @@ class GitGarden:
                     "branch",
                     "-D",
                     branch_name,
-                ],
-                capture_output=True,
+                ]
             )
 
     def list_remote_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
@@ -271,7 +268,7 @@ class GitGarden:
                         "'%(refname:short) %(upstream:short) %(upstream:track)'",
                     ]
                 ),
-                upstream=upstream
+                upstream=upstream,
             )
         else:
             return self.parse_branches(
@@ -302,7 +299,7 @@ class GitGarden:
         :param prune: If set prune remote tracking branches, otherwise fetch only.
         :return: CompletedProcess result from fetch.
         """
-        # not checking return code as errors are expected for non-repo folders
+        # not checking return code as subprocess errors are expected for non-repo folders
         if prune:
             self.logger.debug(f"Fetching & pruning {dir}")
 
@@ -314,6 +311,66 @@ class GitGarden:
             self.logger.debug(f"Fetching {dir}")
             return subprocess.run(
                 [shutil.which("git"), "-C", dir, "fetch"], capture_output=True
+            )
+
+    def switch_branch(self, branch: str, dir: str = ".") -> subprocess.CompletedProcess:
+        """
+        Switch to a branch.
+
+        :param dir: Current directory being processed.
+        :param branch: Branch to push.
+        :return: CompletedProcess result from switch.
+        """
+        if not self.check_git_status():
+            return subprocess.check_output(
+                [
+                    shutil.which("git"),
+                    "-C",
+                    dir,
+                    "switch",
+                    branch,
+                ]
+            )
+        else:
+            self.logger.warning(
+                f"{self.pad2}{Colours.yellow}Switching precluded by uncommitted changes on "
+                f"current branch{Colours.clear}"
+            )
+
+    def create_commit(self, message: str, dir: str = ".") -> None:
+        """
+        Create a commit on a branch.
+
+        :param gg: GitGarden instance.
+        :param dir: Current directory being processed.
+        :param branch: Branch to push.
+        """
+        subprocess.check_call(
+            [shutil.which("git"), "-C", dir, "commit", "--allow-empty", "-m", message]
+        )
+
+    def push_branch(self, branch: str, force: bool = False, dir: str = ".") -> None:
+        """
+        Push a branch to the remote.
+
+        :param branch: Branch to push.
+        :param dir: Current directory being processed.
+
+        """
+        if force:
+            subprocess.check_call(
+                [shutil.which("git"), "-C", dir, "push", "origin", branch, "--force"]
+            )
+        else:
+            subprocess.check_call(
+                [
+                    shutil.which("git"),
+                    "-C",
+                    dir,
+                    "push",
+                    "origin",
+                    branch,
+                ]
             )
 
     def main(self, dirs: List[str]) -> None:
@@ -340,7 +397,7 @@ class GitGarden:
             local_branches_status = self.list_local_branches(dir, upstream=True)
 
             remote_branches = self.list_remote_branches(dir)
-            remote_branches_status = self.list_remote_branches(dir, upstream=True)
+            # remote_branches_status = self.list_remote_branches(dir, upstream=True) # FIXME: unused
 
             root_branch = self.find_root_branch(local_branches, remote_branches)
             current_branch = self.find_current_branch(dir)
@@ -356,8 +413,8 @@ class GitGarden:
                     )
 
             for branch in local_branches_status:
-                branch_name = branch.split()[0].replace("'", "", 1)
-                status = "[" + branch.split("[")[-1].replace("'", "")
+                branch_name = branch.split()[0]
+                status = "[" + branch.split("[")[-1]
 
                 if "HEAD" in branch:
                     self.logger.info(
@@ -379,6 +436,8 @@ class GitGarden:
                         )
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
 
+                        # attempt to fast-forward the current branch
+                        # ff failure is not fatal (logged below)
                         if current_branch == root_branch:
                             ff_result = subprocess.run(
                                 [shutil.which("git"), "-C", dir, "pull", "--ff-only"],
@@ -417,48 +476,23 @@ class GitGarden:
                     if self.args.delete:
                         safe_to_delete = True
                         if current_branch == branch_name:
-                            if self.check_git_status(dir):
-                                safe_to_delete = False
+                            safe_to_delete = False
+                            self.logger.debug(
+                                f"{self.pad2}Switching from {current_branch} to {root_branch}"
+                            )
+                            switch_result = self.switch_branch(branch, dir=dir)
+
+                            if switch_result is None:
                                 self.logger.warning(
-                                    f"{self.pad2}{Colours.yellow}Switching precluded by uncommitted changes on "
-                                    f"current branch - skipping delete of {branch_name}{Colours.clear}"
+                                    f"{self.pad2}{Colours.yellow}Skipping delete of {branch_name}{Colours.clear}"
                                 )
                             else:
-                                self.logger.debug(
-                                    f"{self.pad2}Switching from {current_branch} to {root_branch}"
-                                )
-                                switch_result = subprocess.run(
-                                    [
-                                        shutil.which("git"),
-                                        "-C",
-                                        dir,
-                                        "switch",
-                                        root_branch,
-                                    ],
-                                    capture_output=True,
-                                )
-
-                                if switch_result.returncode != 0:
-                                    safe_to_delete = False
-                                    self.logger.error(
-                                        f"{self.pad2}{Colours.red}Switch failed, skipping delete of "
-                                        f"{branch_name}{Colours.clear}"
-                                    )
-                                    self.logger.error(
-                                        f"{self.pad}{Colours.red}{switch_result.stderr.decode()}{Colours.clear}"
-                                    )
-                                else:
-                                    current_branch = root_branch
+                                safe_to_delete = True
+                                current_branch = root_branch
 
                         if safe_to_delete:
-                            del_result = self.delete_branch(branch_name, dir=dir)
-                            if del_result.returncode != 0:
-                                self.logger.error(
-                                    f"{self.pad}{Colours.red}Unable to delete {branch_name}{Colours.clear}"
-                                )
-                                self.logger.error(
-                                    f"{self.pad}{Colours.red}{del_result.stderr.decode()}{Colours.clear}"
-                                )
+                            self.delete_branch(branch_name, dir=dir)
+
                 else:
                     self.logger.debug(
                         f"{self.pad}{Colours.green}{branch_name} [up to date]{Colours.clear}"
@@ -469,10 +503,7 @@ class GitGarden:
                     if "/HEAD" in remote_branch:
                         continue
                     basename = remote_branch.split("origin/")[-1]
-                    if basename not in [
-                        b.split()[0].rstrip().replace("'", "", 1)
-                        for b in local_branches_status
-                    ]:
+                    if basename not in [b.split()[0] for b in local_branches_status]:
                         self.logger.info(
                             f"{self.pad}{Colours.yellow}{basename} [remote only]{Colours.clear}"
                         )
