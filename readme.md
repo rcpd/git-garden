@@ -68,4 +68,5 @@ tox
 
 # Generate Documentation
 sphinx-build -b html . docs
+docs\index.html
 ```

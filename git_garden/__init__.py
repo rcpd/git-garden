@@ -200,11 +200,12 @@ class GitGarden:
             )
         )
 
-    def list_local_branches(self, dir: str = ".") -> List[str]:
+    def list_local_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
         """
-        List local branches.
+        List local branches (and optionally their upstream branch status).
 
         :param dir: Current directory being processed.
+        :param upstream: If set include upstream branch status.
         :return: List of local branches.
         """
         return self.parse_branches(
