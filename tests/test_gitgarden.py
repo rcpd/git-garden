@@ -156,20 +156,52 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
     
     gg.delete_branch(test_branch, dir=dir) # preemptively delete branch if it exists
     gg.create_branch(test_branch, root_branch="main", dir=dir)
-    gg.push_branch(test_branch, force=True, dir=dir)  # ensure remote tracking is activated
+    gg.push_branch(test_branch, force=True, dir=dir)  # instantiate remote
 
     gg.switch_branch(test_branch, dir=dir)
     gg.create_commit("test commit", dir=dir)  # local branch is now ahead
     
     if gg.check_git_status():
         raise RuntimeError("Working tree was not dirty at the beginning of the test but is now)")
-    
     gg.switch_branch(original_branch, dir=dir)
 
     branches = gg.list_local_branches(dir=dir, upstream=True)
     for branch in branches:
         if branch.startswith(test_branch):
             assert "[ahead" in branch
+
+    gg.delete_branch(test_branch, dir=dir)
+
+
+def test_branch_behind(gg: GitGarden, dir: str) -> None:
+    """
+    Test the "behind" status of a branch.
+
+    :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
+    """
+    if gg.check_git_status():
+        pytest.skip("Test cannot be run while working tree is dirty.")
+
+    test_branch = "gitgarden-test-branch-behind"
+    original_branch = gg.find_current_branch(dir=dir)
+    
+    gg.delete_branch(test_branch, dir=dir) # preemptively delete branch if it exists
+    gg.create_branch(test_branch, root_branch="main", dir=dir)
+    
+    gg.switch_branch(test_branch, dir=dir)
+    gg.create_commit("test commit", dir=dir)
+    gg.push_branch(test_branch, force=True, dir=dir)  # instantiate remote with +1 commit
+    gg.delete_commit(dir=dir)  # local branch is now behind
+
+    if gg.check_git_status():
+        raise RuntimeError("Working tree was not dirty at the beginning of the test but is now)")
+    gg.switch_branch(original_branch, dir=dir)
+
+    branches = gg.list_local_branches(dir=dir, upstream=True)
+    for branch in branches:
+        if branch.startswith(test_branch):
+            assert "[behind" in branch
 
     gg.delete_branch(test_branch, dir=dir)
 

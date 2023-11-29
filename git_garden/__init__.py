@@ -340,7 +340,7 @@ class GitGarden:
 
     def create_commit(self, message: str, dir: str = ".") -> None:
         """
-        Create a commit on a branch.
+        Create a commit on the local branch.
 
         :param gg: GitGarden instance.
         :param dir: Current directory being processed.
@@ -348,6 +348,17 @@ class GitGarden:
         """
         subprocess.check_call(
             [shutil.which("git"), "-C", dir, "commit", "--allow-empty", "-m", message]
+        )
+    
+    def delete_commit(self, dir: str = ".") -> None:
+        """
+        Delete the most recent commit on the local branch.
+
+        :param gg: GitGarden instance.
+        :param dir: Current directory being processed.
+        """
+        subprocess.check_call(
+            [shutil.which("git"), "-C", dir, "reset", "HEAD~", "--hard"]
         )
 
     def push_branch(self, branch: str, force: bool = False, dir: str = ".") -> None:
@@ -360,8 +371,7 @@ class GitGarden:
         """
         if force:
             subprocess.check_call(
-                [shutil.which("git"), "-C", dir, "push", "origin", branch, "-u", f"origin/{branch}",
-                 "--force"]
+                [shutil.which("git"), "-C", dir, "push", "-u", "origin", branch, "--force"]
             )
         else:
             subprocess.check_call(
@@ -370,10 +380,9 @@ class GitGarden:
                     "-C",
                     dir,
                     "push",
-                    "origin",
-                    branch, 
-                    "-u", 
-                    f"origin/{branch}"
+                    "-u",
+                    "origin", 
+                    branch
                 ]
             )
 
