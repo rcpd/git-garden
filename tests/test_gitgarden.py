@@ -70,30 +70,44 @@ def dir(gg: GitGarden) -> Generator[str, None, None]:
     yield os.path.join(gg.args.directory, "git-garden")
 
 
-def test_git_status(gg: GitGarden) -> None:
+def test_git_status(gg: GitGarden, dir: str) -> None:
     """
     Inject a change into the working tree and check that the status is dirty.
     Revert the change before attesting the state.
 
     :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
     """
     tmp_file = "test.tmp"
     with open(tmp_file, "w") as f:
         f.write("")
-    status = gg.check_git_status()
+    status = gg.check_git_status(dir=dir)
     os.remove(tmp_file)
     assert status is True
 
 
-def test_branch_crud(gg: GitGarden) -> None:
+def test_branch_crud(gg: GitGarden, dir: str) -> None:
     """
     Test the creation and deletion of a branch.
 
     :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
     """
     branch = "test-branch"
-    assert gg.create_branch(branch) == 0
-    assert gg.delete_branch(branch) == 0
+    gg.delete_branch(branch, dir=dir) # preemptively delete branch if it exists
+
+    gg.create_branch(branch, dir=dir)
+    gg.push_branch(branch, dir=dir)
+
+    assert branch in gg.list_local_branches(dir=dir)
+    assert f"origin/{branch}" in gg.list_remote_branches(dir=dir)
+
+    gg.delete_branch(branch, dir=dir)
+    gg.delete_branch(branch, remote=True, dir=dir)
+    gg.fetch(prune=True, dir=dir)
+
+    assert branch not in gg.list_local_branches(dir=dir)
+    assert branch not in gg.list_remote_branches(dir=dir)
 
 
 def test_list_branches(gg: GitGarden, dir: str) -> None:
@@ -204,6 +218,7 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
             assert "[behind" in branch
 
     gg.delete_branch(test_branch, dir=dir)
+    gg.delete_branch
 
 
 def test_git_garden(gg: GitGarden) -> None:
