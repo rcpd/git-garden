@@ -7,6 +7,7 @@ from argparse import Namespace
 from typing import Generator
 
 # TODO: get_dirs_with_depth
+# TODO: gone + remote only status
 
 
 @pytest.fixture(scope="session")
