@@ -97,6 +97,8 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
     gg.delete_branch(branch, dir=dir) # preemptively delete branch if it exists
 
     gg.create_branch(branch, dir=dir)
+    assert f"{branch} origin/{branch}" not in gg.list_local_branches(dir=dir, upstream=True)  # local only status
+
     gg.push_branch(branch, dir=dir)
 
     assert branch in gg.list_local_branches(dir=dir)
@@ -166,12 +168,11 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
         pytest.skip("Test cannot be run while working tree is dirty.")
 
     test_branch = "gitgarden-test-branch-ahead"
+    gg.delete_branch(test_branch, dir=dir) # preemptively delete branch if it exists
     original_branch = gg.find_current_branch(dir=dir)
     
-    gg.delete_branch(test_branch, dir=dir) # preemptively delete branch if it exists
     gg.create_branch(test_branch, root_branch="main", dir=dir)
     gg.push_branch(test_branch, force=True, dir=dir)  # instantiate remote
-
     gg.switch_branch(test_branch, dir=dir)
     gg.create_commit("test commit", dir=dir)  # local branch is now ahead
     
@@ -185,6 +186,8 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
             assert "[ahead" in branch
 
     gg.delete_branch(test_branch, dir=dir)
+    gg.delete_branch(test_branch, remote=True, dir=dir)
+    gg.fetch(prune=True, dir=dir)
 
 
 def test_branch_behind(gg: GitGarden, dir: str) -> None:
@@ -218,7 +221,8 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
             assert "[behind" in branch
 
     gg.delete_branch(test_branch, dir=dir)
-    gg.delete_branch
+    gg.delete_branch(test_branch, remote=True, dir=dir)
+    gg.fetch(prune=True, dir=dir)
 
 
 def test_git_garden(gg: GitGarden) -> None:

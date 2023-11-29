@@ -176,22 +176,22 @@ class GitGarden:
 
         :param branch_name: Branch to delete.
         :param dir: Current directory being processed.
-        :param remote: If set delete a remote tracking branch, otherwise delete the local branch.
+        :param remote: If set delete the remote branch, otherwise delete the local branch.
         :return: Exit code from branch creation.
         """
         # No check_call() as git returns non-zero for non-existent branches
         if remote:
             self.logger.debug(
-                f"{self.pad}Deleting remote tracking branch: {branch_name}"
+                f"{self.pad}Deleting remote branch: {branch_name}"
             )
             return subprocess.run(
                 [
                     shutil.which("git"),
                     "-C",
                     dir,
-                    "branch",
-                    "-r",
-                    "-D",
+                    "push",
+                    "origin",
+                    "--delete",
                     branch_name,
                 ]
             ).returncode
