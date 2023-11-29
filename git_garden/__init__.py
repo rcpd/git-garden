@@ -179,11 +179,12 @@ class GitGarden:
         :param remote: If set delete a remote tracking branch, otherwise delete the local branch.
         :return: Exit code from branch creation.
         """
+        # No check_call() as git returns non-zero for non-existent branches
         if remote:
             self.logger.debug(
                 f"{self.pad}Deleting remote tracking branch: {branch_name}"
             )
-            return subprocess.check_call(
+            return subprocess.run(
                 [
                     shutil.which("git"),
                     "-C",
@@ -193,10 +194,10 @@ class GitGarden:
                     "-D",
                     branch_name,
                 ]
-            )
+            ).returncode
         else:
             self.logger.info(f"{self.pad2}Deleting local branch {branch_name}")
-            return subprocess.check_call(
+            return subprocess.run(
                 [
                     shutil.which("git"),
                     "-C",
@@ -205,7 +206,7 @@ class GitGarden:
                     "-D",
                     branch_name,
                 ]
-            )
+            ).returncode
 
     def list_remote_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
         """
@@ -359,7 +360,8 @@ class GitGarden:
         """
         if force:
             subprocess.check_call(
-                [shutil.which("git"), "-C", dir, "push", "origin", branch, "--force"]
+                [shutil.which("git"), "-C", dir, "push", "origin", branch, "-u", f"origin/{branch}",
+                 "--force"]
             )
         else:
             subprocess.check_call(
@@ -369,7 +371,9 @@ class GitGarden:
                     dir,
                     "push",
                     "origin",
-                    branch,
+                    branch, 
+                    "-u", 
+                    f"origin/{branch}"
                 ]
             )
 

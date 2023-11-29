@@ -151,25 +151,27 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
     if gg.check_git_status():
         pytest.skip("Test cannot be run while working tree is dirty.")
 
-    test_branch = "ahead-branch"
+    test_branch = "gitgarden-test-branch-ahead"
     original_branch = gg.find_current_branch(dir=dir)
     
     gg.delete_branch(test_branch, dir=dir) # preemptively delete branch if it exists
     gg.create_branch(test_branch, root_branch="main", dir=dir)
-    gg.push_branch(test_branch, force=True, dir=dir)
+    gg.push_branch(test_branch, force=True, dir=dir)  # ensure remote tracking is activated
+
+    gg.switch_branch(test_branch, dir=dir)
+    gg.create_commit("test commit", dir=dir)  # local branch is now ahead
     
-    # gg.switch_branch(test_branch, dir=dir)
-    # gg.create_commit("test commit", dir=dir)
-    # gg.switch_branch(original_branch, dir=dir) # FIXME: not switching back?
+    if gg.check_git_status():
+        raise RuntimeError("Working tree was not dirty at the beginning of the test but is now)")
+    
+    gg.switch_branch(original_branch, dir=dir)
 
-    # gg.fetch(dir=dir)
+    branches = gg.list_local_branches(dir=dir, upstream=True)
+    for branch in branches:
+        if branch.startswith(test_branch):
+            assert "[ahead" in branch
 
-#     branches = gg.list_local_branches(dir=dir, upstream=True)
-#     for branch in branches:
-#         if branch.startswith(test_branch):
-#             assert "[ahead" in branch
-# 
-#     gg.delete_branch(test_branch, dir=dir)
+    gg.delete_branch(test_branch, dir=dir)
 
 
 def test_git_garden(gg: GitGarden) -> None:
