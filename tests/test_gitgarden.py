@@ -95,10 +95,12 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
     :param dir: Path to the git-garden directory.
     """
     branch = "test-branch"
-    gg.delete_branch(branch, dir=dir) # preemptively delete branch if it exists
+    gg.delete_branch(branch, dir=dir)  # preemptively delete branch if it exists
 
     gg.create_branch(branch, dir=dir)
-    assert f"{branch} origin/{branch}" not in gg.list_local_branches(dir=dir, upstream=True)  # local only status
+    assert f"{branch} origin/{branch}" not in gg.list_local_branches(
+        dir=dir, upstream=True
+    )  # local only status
 
     gg.push_branch(branch, dir=dir)
 
@@ -169,16 +171,18 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
         pytest.skip("Test cannot be run while working tree is dirty.")
 
     test_branch = "gitgarden-test-branch-ahead"
-    gg.delete_branch(test_branch, dir=dir) # preemptively delete branch if it exists
+    gg.delete_branch(test_branch, dir=dir)  # preemptively delete branch if it exists
     original_branch = gg.find_current_branch(dir=dir)
-    
+
     gg.create_branch(test_branch, root_branch="main", dir=dir)
     gg.push_branch(test_branch, force=True, dir=dir)  # instantiate remote
     gg.switch_branch(test_branch, dir=dir)
     gg.create_commit("test commit", dir=dir)  # local branch is now ahead
-    
+
     if gg.check_git_status():
-        raise RuntimeError("Working tree was not dirty at the beginning of the test but is now)")
+        raise RuntimeError(
+            "Working tree was not dirty at the beginning of the test but is now)"
+        )
     gg.switch_branch(original_branch, dir=dir)
 
     branches = gg.list_local_branches(dir=dir, upstream=True)
@@ -203,17 +207,21 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
 
     test_branch = "gitgarden-test-branch-behind"
     original_branch = gg.find_current_branch(dir=dir)
-    
-    gg.delete_branch(test_branch, dir=dir) # preemptively delete branch if it exists
+
+    gg.delete_branch(test_branch, dir=dir)  # preemptively delete branch if it exists
     gg.create_branch(test_branch, root_branch="main", dir=dir)
-    
+
     gg.switch_branch(test_branch, dir=dir)
     gg.create_commit("test commit", dir=dir)
-    gg.push_branch(test_branch, force=True, dir=dir)  # instantiate remote with +1 commit
+    gg.push_branch(
+        test_branch, force=True, dir=dir
+    )  # instantiate remote with +1 commit
     gg.delete_commit(dir=dir)  # local branch is now behind
 
     if gg.check_git_status():
-        raise RuntimeError("Working tree was not dirty at the beginning of the test but is now)")
+        raise RuntimeError(
+            "Working tree was not dirty at the beginning of the test but is now)"
+        )
     gg.switch_branch(original_branch, dir=dir)
 
     branches = gg.list_local_branches(dir=dir, upstream=True)

@@ -39,7 +39,7 @@ if __name__ == "__main__":
         "--depth",
         default=3,
         type=int,
-        help="(Optional) Search depth for directories to process" " [Default: 3]",
+        help="(Optional) Search depth for directories to process [Default: 3]",
     )
     parser.add_argument(
         "--quiet",

@@ -181,9 +181,7 @@ class GitGarden:
         """
         # No check_call() as git returns non-zero for non-existent branches
         if remote:
-            self.logger.debug(
-                f"{self.pad}Deleting remote branch: {branch_name}"
-            )
+            self.logger.debug(f"{self.pad}Deleting remote branch: {branch_name}")
             return subprocess.run(
                 [
                     shutil.which("git"),
@@ -318,8 +316,8 @@ class GitGarden:
         """
         Switch to a branch.
 
-        :param dir: Current directory being processed.
         :param branch: Branch to push.
+        :param dir: Current directory being processed.
         :return: CompletedProcess result from switch.
         """
         if not self.check_git_status():
@@ -342,19 +340,17 @@ class GitGarden:
         """
         Create a commit on the local branch.
 
-        :param gg: GitGarden instance.
+        :param message: Commit message.
         :param dir: Current directory being processed.
-        :param branch: Branch to push.
         """
         subprocess.check_call(
             [shutil.which("git"), "-C", dir, "commit", "--allow-empty", "-m", message]
         )
-    
+
     def delete_commit(self, dir: str = ".") -> None:
         """
         Delete the most recent commit on the local branch.
 
-        :param gg: GitGarden instance.
         :param dir: Current directory being processed.
         """
         subprocess.check_call(
@@ -366,14 +362,11 @@ class GitGarden:
         Push a branch to the remote.
 
         :param branch: Branch to push.
+        :param force: Switch for force push.
         :param dir: Current directory being processed.
 
         """
         if force:
-            subprocess.check_call(
-                [shutil.which("git"), "-C", dir, "push", "-u", "origin", branch, "--force"]
-            )
-        else:
             subprocess.check_call(
                 [
                     shutil.which("git"),
@@ -381,9 +374,14 @@ class GitGarden:
                     dir,
                     "push",
                     "-u",
-                    "origin", 
-                    branch
+                    "origin",
+                    branch,
+                    "--force",
                 ]
+            )
+        else:
+            subprocess.check_call(
+                [shutil.which("git"), "-C", dir, "push", "-u", "origin", branch]
             )
 
     def main(self, dirs: List[str]) -> None:
