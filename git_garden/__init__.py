@@ -18,7 +18,12 @@ class GitGarden:
     :param args: Command line arguments.
     """
 
-    def __init__(self, logger: logging.Logger, args: argparse.Namespace, git: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        logger: logging.Logger,
+        args: argparse.Namespace,
+        git: Optional[str] = None,
+    ) -> None:
         if git is None:
             git = shutil.which("git")
         if git is None or not os.path.exists(git):
@@ -279,9 +284,7 @@ class GitGarden:
             )
         else:
             return self.parse_branches(
-                subprocess.check_output(
-                    [self.git, "--no-pager", "-C", dir, "branch"]
-                )
+                subprocess.check_output([self.git, "--no-pager", "-C", dir, "branch"])
             )
 
     def purge_remote_branches(self, dir: str = ".") -> None:
@@ -316,9 +319,7 @@ class GitGarden:
             )
         else:
             self.logger.debug(f"Fetching {dir}")
-            return subprocess.run(
-                [self.git, "-C", dir, "fetch"], capture_output=True
-            )
+            return subprocess.run([self.git, "-C", dir, "fetch"], capture_output=True)
 
     def switch_branch(self, branch: str, dir: str = ".") -> Union[bytes, None]:
         """
@@ -361,9 +362,7 @@ class GitGarden:
 
         :param dir: Current directory being processed.
         """
-        subprocess.check_call(
-            [self.git, "-C", dir, "reset", "HEAD~", "--hard"]
-        )
+        subprocess.check_call([self.git, "-C", dir, "reset", "HEAD~", "--hard"])
 
     def push_branch(self, branch: str, force: bool = False, dir: str = ".") -> None:
         """
@@ -388,9 +387,7 @@ class GitGarden:
                 ]
             )
         else:
-            subprocess.check_call(
-                [self.git, "-C", dir, "push", "-u", "origin", branch]
-            )
+            subprocess.check_call([self.git, "-C", dir, "push", "-u", "origin", branch])
 
     def main(self, dirs: List[str]) -> None:
         """
@@ -507,7 +504,9 @@ class GitGarden:
                                 )
                             else:
                                 safe_to_delete = True
-                                current_branch = root_branch if root_branch is not None else ""
+                                current_branch = (
+                                    root_branch if root_branch is not None else ""
+                                )
 
                         if safe_to_delete:
                             self.delete_branch(branch_name, dir=dir)
@@ -538,7 +537,12 @@ class CustomFormatter(logging.Formatter):
     :param style: The formatting style).
     """
 
-    def __init__(self, fmt: str, datefmt: Optional[str] = None, style: Literal["%", "{", "$"] = "{") -> None:
+    def __init__(
+        self,
+        fmt: str,
+        datefmt: Optional[str] = None,
+        style: Literal["%", "{", "$"] = "{",
+    ) -> None:
         super().__init__(fmt, datefmt, style)
 
     def format(self, record: logging.LogRecord) -> str:
