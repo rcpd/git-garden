@@ -184,7 +184,6 @@ class GitGarden:
             [self.git, "-C", dir, "branch", branch_name, root_branch]
         )
 
-    # TODO: delete remote branch
     def delete_branch(
         self, branch_name: str, dir: str = ".", remote: bool = False
     ) -> int:
@@ -376,7 +375,6 @@ class GitGarden:
         :param branch: Branch to push.
         :param force: Switch for force push.
         :param dir: Current directory being processed.
-
         """
         if force:
             subprocess.check_call(
@@ -418,7 +416,6 @@ class GitGarden:
             local_branches_status = self.list_local_branches(dir, upstream=True)
 
             remote_branches = self.list_remote_branches(dir)
-            # remote_branches_status = self.list_remote_branches(dir, upstream=True) # FIXME: unused
 
             root_branch = self.find_root_branch(local_branches, remote_branches)
             current_branch = self.find_current_branch(dir)
@@ -457,6 +454,7 @@ class GitGarden:
                         )
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
 
+                        # TODO: ff function
                         # attempt to fast-forward the current branch
                         # ff failure is not fatal (logged below)
                         if current_branch == root_branch:
