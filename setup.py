@@ -14,6 +14,7 @@ setup(
             "pytest",
             "pytest-cov",
             "pydoclint",
+            "mypy"
         ]
     },
 )

@@ -4,7 +4,8 @@ import subprocess
 import shutil
 import argparse
 
-from typing import List
+from typing import List, Optional, Union
+from typing_extensions import Literal
 
 
 class GitGarden:
@@ -17,7 +18,14 @@ class GitGarden:
     :param args: Command line arguments.
     """
 
-    def __init__(self, logger: logging.Logger, args: argparse.Namespace) -> None:
+    def __init__(self, logger: logging.Logger, args: argparse.Namespace, git: Optional[str] = None) -> None:
+        if git is None:
+            git = shutil.which("git")
+        if git is None or not os.path.exists(git):
+            raise RuntimeError("Git installation not found")
+        else:
+            self.git = git
+
         self.args = args
         self.logger = logger
         self.pad = _pad = "   "
@@ -42,7 +50,7 @@ class GitGarden:
         """
         dir = os.path.expanduser(dir)
 
-        dirs = []
+        dirs: List[str] = []
         if depth == 0:
             return dirs
 
@@ -95,13 +103,13 @@ class GitGarden:
         :return: Current branch name.
         """
         local_branches_raw = subprocess.check_output(
-            [shutil.which("git"), "-C", dir, "branch", "--show-current"]
+            [self.git, "-C", dir, "branch", "--show-current"]
         )
         return local_branches_raw.decode().replace("\n", "")
 
     def find_root_branch(
         self, local_branches: List[str], remote_branches: List[str]
-    ) -> str:
+    ) -> Union[str, None]:
         """
         Attempt to find the root branch (master or main) for a given git repo.
 
@@ -143,7 +151,7 @@ class GitGarden:
         """
         git_status = subprocess.check_output(
             [
-                shutil.which("git"),
+                self.git,
                 "-C",
                 dir,
                 "status",
@@ -164,7 +172,7 @@ class GitGarden:
         :return: Exit code from branch creation.
         """
         return subprocess.check_call(
-            [shutil.which("git"), "-C", dir, "branch", branch_name, root_branch]
+            [self.git, "-C", dir, "branch", branch_name, root_branch]
         )
 
     # TODO: delete remote branch
@@ -184,7 +192,7 @@ class GitGarden:
             self.logger.debug(f"{self.pad}Deleting remote branch: {branch_name}")
             return subprocess.run(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "-C",
                     dir,
                     "push",
@@ -197,7 +205,7 @@ class GitGarden:
             self.logger.info(f"{self.pad2}Deleting local branch {branch_name}")
             return subprocess.run(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "-C",
                     dir,
                     "branch",
@@ -218,7 +226,7 @@ class GitGarden:
             return self.parse_branches(
                 subprocess.check_output(
                     [
-                        shutil.which("git"),
+                        self.git,
                         "--no-pager",
                         "-C",
                         dir,
@@ -234,7 +242,7 @@ class GitGarden:
         return self.parse_branches(
             subprocess.check_output(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "--no-pager",
                     "-C",
                     dir,
@@ -258,7 +266,7 @@ class GitGarden:
             return self.parse_branches(
                 subprocess.check_output(
                     [
-                        shutil.which("git"),
+                        self.git,
                         "--no-pager",
                         "-C",
                         dir,
@@ -272,7 +280,7 @@ class GitGarden:
         else:
             return self.parse_branches(
                 subprocess.check_output(
-                    [shutil.which("git"), "--no-pager", "-C", dir, "branch"]
+                    [self.git, "--no-pager", "-C", dir, "branch"]
                 )
             )
 
@@ -303,16 +311,16 @@ class GitGarden:
             self.logger.debug(f"Fetching & pruning {dir}")
 
             return subprocess.run(
-                [shutil.which("git"), "-C", dir, "fetch", "--prune"],
+                [self.git, "-C", dir, "fetch", "--prune"],
                 capture_output=True,
             )
         else:
             self.logger.debug(f"Fetching {dir}")
             return subprocess.run(
-                [shutil.which("git"), "-C", dir, "fetch"], capture_output=True
+                [self.git, "-C", dir, "fetch"], capture_output=True
             )
 
-    def switch_branch(self, branch: str, dir: str = ".") -> subprocess.CompletedProcess:
+    def switch_branch(self, branch: str, dir: str = ".") -> Union[bytes, None]:
         """
         Switch to a branch.
 
@@ -323,7 +331,7 @@ class GitGarden:
         if not self.check_git_status():
             return subprocess.check_output(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "-C",
                     dir,
                     "switch",
@@ -344,7 +352,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         """
         subprocess.check_call(
-            [shutil.which("git"), "-C", dir, "commit", "--allow-empty", "-m", message]
+            [self.git, "-C", dir, "commit", "--allow-empty", "-m", message]
         )
 
     def delete_commit(self, dir: str = ".") -> None:
@@ -354,7 +362,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         """
         subprocess.check_call(
-            [shutil.which("git"), "-C", dir, "reset", "HEAD~", "--hard"]
+            [self.git, "-C", dir, "reset", "HEAD~", "--hard"]
         )
 
     def push_branch(self, branch: str, force: bool = False, dir: str = ".") -> None:
@@ -369,7 +377,7 @@ class GitGarden:
         if force:
             subprocess.check_call(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "-C",
                     dir,
                     "push",
@@ -381,7 +389,7 @@ class GitGarden:
             )
         else:
             subprocess.check_call(
-                [shutil.which("git"), "-C", dir, "push", "-u", "origin", branch]
+                [self.git, "-C", dir, "push", "-u", "origin", branch]
             )
 
     def main(self, dirs: List[str]) -> None:
@@ -451,14 +459,14 @@ class GitGarden:
                         # ff failure is not fatal (logged below)
                         if current_branch == root_branch:
                             ff_result = subprocess.run(
-                                [shutil.which("git"), "-C", dir, "pull", "--ff-only"],
+                                [self.git, "-C", dir, "pull", "--ff-only"],
                                 capture_output=True,
                             )
                         else:
                             # equivalent to a pull -ff-only (only works on non-current branch)
                             ff_result = subprocess.run(
                                 [
-                                    shutil.which("git"),
+                                    self.git,
                                     "-C",
                                     dir,
                                     "fetch",
@@ -499,7 +507,7 @@ class GitGarden:
                                 )
                             else:
                                 safe_to_delete = True
-                                current_branch = root_branch
+                                current_branch = root_branch if root_branch is not None else ""
 
                         if safe_to_delete:
                             self.delete_branch(branch_name, dir=dir)
@@ -527,10 +535,10 @@ class CustomFormatter(logging.Formatter):
 
     :param fmt: The format string for the log message.
     :param datefmt: The format string for the date in the log message.
-    :param style: The formatting style ('%' or '{' style).
+    :param style: The formatting style).
     """
 
-    def __init__(self, fmt: str, datefmt: str = None, style: str = "{") -> None:
+    def __init__(self, fmt: str, datefmt: Optional[str] = None, style: Literal["%", "{", "$"] = "{") -> None:
         super().__init__(fmt, datefmt, style)
 
     def format(self, record: logging.LogRecord) -> str:
