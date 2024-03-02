@@ -47,6 +47,8 @@ class GitGarden:
                 if type(handler) is logging.StreamHandler:
                     handler.setLevel(logging.INFO)
 
+        self.colours = Colours()
+
     def get_dirs_with_depth(self, dir: str, depth: int = 3) -> List[str]:
         """
         Recursively search directories for git repos until a given depth.
@@ -144,7 +146,7 @@ class GitGarden:
 
         if root_branch is None:
             self.logger.warning(
-                f"{self.pad}{Colours.yellow}Unable to determine root branch{Colours.clear}"
+                f"{self.pad}{self.colours.yellow}Unable to determine root branch{self.colours.clear}"
             )
 
         return root_branch
@@ -343,8 +345,8 @@ class GitGarden:
             )
         else:
             self.logger.warning(
-                f"{self.pad2}{Colours.yellow}Switching precluded by uncommitted changes on "
-                f"current branch{Colours.clear}"
+                f"{self.pad2}{self.colours.yellow}Switching precluded by uncommitted changes on current branch"
+                f"{self.colours.clear}"
             )
 
     def create_commit(self, message: str, dir: str = ".") -> None:
@@ -423,11 +425,11 @@ class GitGarden:
             if root_branch is None or current_branch is None:
                 if self.args.ff:
                     self.logger.warning(
-                        f"{self.pad}{Colours.yellow}--ff will be skipped{Colours.clear}"
+                        f"{self.pad}{self.colours.yellow}--ff will be skipped{self.colours.clear}"
                     )
                 if self.args.delete:
                     self.logger.warning(
-                        f"{self.pad}{Colours.yellow}--delete will be skipped{Colours.clear}"
+                        f"{self.pad}{self.colours.yellow}--delete will be skipped{self.colours.clear}"
                     )
 
             for branch in local_branches_status:
@@ -436,21 +438,21 @@ class GitGarden:
 
                 if "HEAD" in branch:
                     self.logger.info(
-                        f"{self.pad}{Colours.yellow}{branch_name}{Colours.clear}"
+                        f"{self.pad}{self.colours.yellow}{branch_name}{self.colours.clear}"
                     )
                 elif "origin" not in branch:
                     self.logger.info(
-                        f"{self.pad}{Colours.yellow}{branch_name} [local only]{Colours.clear}"
+                        f"{self.pad}{self.colours.yellow}{branch_name} [local only]{self.colours.clear}"
                     )
                 elif "[ahead" in branch:
                     self.logger.debug(
-                        f"{self.pad}{Colours.yellow}{branch_name} {status}"
+                        f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}"
                     )
 
                 elif "[behind" in branch:
                     if self.args.ff and branch_name == root_branch:
                         self.logger.info(
-                            f"{self.pad}{Colours.yellow}{branch_name} {status}{Colours.clear}"
+                            f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
                         )
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
 
@@ -477,19 +479,19 @@ class GitGarden:
 
                         if ff_result.returncode != 0:
                             self.logger.error(
-                                f"{self.pad2}{Colours.red}Unable to fast-forward {branch_name}{Colours.clear}"
+                                f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}{self.colours.clear}"
                             )
                             self.logger.error(
-                                f"{self.pad2}{Colours.red}{ff_result.stderr.decode()}{Colours.clear}"
+                                f"{self.pad2}{self.colours.red}{ff_result.stderr.decode()}{self.colours.clear}"
                             )
                     else:
                         self.logger.debug(
-                            f"{self.pad}{Colours.yellow}{branch_name} {status}{Colours.clear}"
+                            f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
                         )
 
                 elif "[gone]" in branch:
                     self.logger.info(
-                        f"{self.pad}{Colours.red}{branch_name} [remote deleted]{Colours.clear}"
+                        f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}"
                     )
                     if self.args.delete:
                         safe_to_delete = True
@@ -502,7 +504,8 @@ class GitGarden:
 
                             if switch_result is None:
                                 self.logger.warning(
-                                    f"{self.pad2}{Colours.yellow}Skipping delete of {branch_name}{Colours.clear}"
+                                    f"{self.pad2}{self.colours.yellow}Skipping delete of {branch_name}"
+                                    f"{self.colours.clear}"
                                 )
                             else:
                                 safe_to_delete = True
@@ -515,7 +518,7 @@ class GitGarden:
 
                 else:
                     self.logger.debug(
-                        f"{self.pad}{Colours.green}{branch_name} [up to date]{Colours.clear}"
+                        f"{self.pad}{self.colours.green}{branch_name} [up to date]{self.colours.clear}"
                     )
 
             if self.args.remote:
@@ -525,7 +528,7 @@ class GitGarden:
                     basename = remote_branch.split("origin/")[-1]
                     if basename not in [b.split()[0] for b in local_branches_status]:
                         self.logger.info(
-                            f"{self.pad}{Colours.yellow}{basename} [remote only]{Colours.clear}"
+                            f"{self.pad}{self.colours.yellow}{basename} [remote only]{self.colours.clear}"
                         )
 
 
@@ -546,6 +549,7 @@ class CustomFormatter(logging.Formatter):
         style: Literal["%", "{", "$"] = "{",
     ) -> None:
         super().__init__(fmt, datefmt, style)
+        self.colours = Colours()
 
     def format(self, record: logging.LogRecord) -> str:
         """
@@ -565,11 +569,11 @@ class CustomFormatter(logging.Formatter):
         :return: The parsed log message.
         """
         message = (
-            message.replace(Colours.yellow, "")
-            .replace(Colours.red, "")
-            .replace(Colours.green, "")
+            message.replace(self.colours.yellow, "")
+            .replace(self.colours.red, "")
+            .replace(self.colours.green, "")
         )
-        message = message.replace(Colours.clear, "")
+        message = message.replace(self.colours.clear, "")
         return message
 
 
@@ -579,7 +583,8 @@ class Colours:
     Colour table: https://stackoverflow.com/a/21786287/10639133.
     """
 
-    yellow = "\x1b[0;33;40m"
-    red = "\x1b[0;31;40m"
-    green = "\x1b[0;32;40m"
-    clear = "\x1b[0m"
+    def __init__(self) -> None:
+        self.yellow = "\x1b[0;33;40m"
+        self.red = "\x1b[0;31;40m"
+        self.green = "\x1b[0;32;40m"
+        self.clear = "\x1b[0m"
