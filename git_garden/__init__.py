@@ -348,6 +348,7 @@ class GitGarden:
                 f"{self.pad2}{self.colours.yellow}Switching precluded by uncommitted changes on current branch"
                 f"{self.colours.clear}"
             )
+            return None
 
     def create_commit(self, message: str, dir: str = ".") -> None:
         """

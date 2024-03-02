@@ -19,6 +19,3 @@ exclude = "venv|.tox|.git"
 arg-type-hints-in-docstring = false
 check-return-types = false
 check-yield-types = false
-
-[tool.mypy]
-warn_no_return = false

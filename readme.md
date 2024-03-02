@@ -69,4 +69,10 @@ tox
 # Generate Documentation
 sphinx-build -b html . docs
 docs\index.html
+
+# compilation
+mypyc git_garden\__init__.py
+cp -Path *.pyd, git_garden\__main__.py -Destination ..\ -Force
+python ..\__main__.py --directory D:\dev
+rm ..\*.pyd, ..\__main__.py, ..\garden.log
 ```
