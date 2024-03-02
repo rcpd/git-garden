@@ -16,6 +16,8 @@ class GitGarden:
 
     :param logger: Logger to use for output.
     :param args: Command line arguments.
+    :param git: Path to git executable (attempts to resolve system "git" if not passed).
+    :raises RuntimeError: If Git installation not found.
     """
 
     def __init__(
