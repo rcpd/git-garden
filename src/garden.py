@@ -162,7 +162,7 @@ def main(dirs: List[str], args: argparse.Namespace):
                         logger.error(f"{Colours.red}{pad2}Unable to fast-forward {branch_name}{Colours.clear}")
                         logger.error(f"{Colours.red}{pad2}{ff_result.stderr.decode()}{Colours.clear}")
                 else:
-                    logger.debug(f"{pad}{branch_name} [{branch.split('[')[-1]}")
+                    logger.debug(f"{Colours.yellow}{pad}{branch_name} [{branch.split('[')[-1]}{Colours.clear}")
 
             elif "[gone]" in branch:
                 logger.info(f"{Colours.red}{pad}{branch_name} [remote deleted]{Colours.clear}")
