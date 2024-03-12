@@ -1,6 +1,37 @@
 # Git-Garden
 
-## Common Test Cases
+## Installation
+
+This project has no external dependencies other than `git`, no installation is necessary.
+
+## Common Use Cases
+
+```
+# run with defaults: fetch & prune, report on local branches only
+# --directory is the root of the directories being walked for git repos
+# if --directory is not passed it will default to D:\dev (Windows) or ~ (Linux)
+python garden.py --directory D:\dev
+
+# attempt to fast-forward main/master if behind
+python garden.py --ff
+
+# include or exclude directories matching a sub-string
+# i.e. for D:\dev\MyProject & D:\dev\MyOtherProject
+python garden.py --include MyProject --include MyOtherProject
+python garden.py --exclude MyProject --exclude MyOtherProject
+
+# skip reporting basic current/ahead/behind status
+python garden.py --quiet
+
+# attempt to delete orphaned local branches
+# (branches with remote tracking where remote no longer exists)
+python garden.py --delete
+
+# see usage/syntax help
+python garden.py --help
+```
+
+## Test Cases (Non-Exhaustive)
 
 ```
 python garden.py
