@@ -126,27 +126,27 @@ def main(dirs: List[str], args: argparse.Namespace):
                         break
         
         if current_branch is None:
-            logger.warning(f"{Colours.yellow}{pad}Unable to determine current branch{Colours.clear}")
+            logger.warning(f"{pad}{Colours.yellow}Unable to determine current branch{Colours.clear}")
         if root_branch is None:
-            logger.warning(f"{Colours.yellow}{pad}Unable to determine root branch{Colours.clear}")
+            logger.warning(f"{pad}{Colours.yellow}Unable to determine root branch{Colours.clear}")
         if root_branch is None or current_branch is None:
             if args.ff:
-                logger.warning(f"{Colours.yellow}{pad}--ff will be skipped{Colours.clear}")
+                logger.warning(f"{pad}{Colours.yellow}--ff will be skipped{Colours.clear}")
             if args.delete:
-                logger.warning(f"{Colours.yellow}{pad}--delete will be skipped{Colours.clear}")
+                logger.warning(f"{pad}{Colours.yellow}--delete will be skipped{Colours.clear}")
 
         for branch in local_branches:
             branch_name = branch.split()[0]
             if "HEAD" in branch:
-                logger.info(f"{Colours.yellow}{pad}{branch}{Colours.clear}")
+                logger.info(f"{pad}{Colours.yellow}{branch}{Colours.clear}")
             elif "origin" not in branch:
-                logger.info(f"{Colours.yellow}{pad}{branch.rstrip()} [local only]{Colours.clear}")
+                logger.info(f"{pad}{Colours.yellow}{branch.rstrip()} [local only]{Colours.clear}")
             elif ("[ahead" in branch):
-                logger.debug(f"{Colours.yellow}{pad}{branch_name} [{branch.split('[')[-1]}")
+                logger.debug(f"{pad}{Colours.yellow}{branch_name} [{branch.split('[')[-1]}")
             
             elif ("[behind" in branch):
                 if args.ff and branch_name == root_branch:
-                    logger.info(f"{Colours.yellow}{pad}{branch_name} [{branch.split('[')[-1]}{Colours.clear}")
+                    logger.info(f"{pad}{Colours.yellow}{branch_name} [{branch.split('[')[-1]}{Colours.clear}")
                     logger.info(f"{pad2}Fast-forwarding {branch_name}")
 
                     if current_branch == root_branch:
@@ -159,13 +159,13 @@ def main(dirs: List[str], args: argparse.Namespace):
                             capture_output=True)
                         
                     if ff_result.returncode != 0:
-                        logger.error(f"{Colours.red}{pad2}Unable to fast-forward {branch_name}{Colours.clear}")
-                        logger.error(f"{Colours.red}{pad2}{ff_result.stderr.decode()}{Colours.clear}")
+                        logger.error(f"{pad2}{Colours.red}Unable to fast-forward {branch_name}{Colours.clear}")
+                        logger.error(f"{pad2}{Colours.red}{ff_result.stderr.decode()}{Colours.clear}")
                 else:
-                    logger.debug(f"{Colours.yellow}{pad}{branch_name} [{branch.split('[')[-1]}{Colours.clear}")
+                    logger.debug(f"{pad}{Colours.yellow}{branch_name} [{branch.split('[')[-1]}{Colours.clear}")
 
             elif "[gone]" in branch:
-                logger.info(f"{Colours.red}{pad}{branch_name} [remote deleted]{Colours.clear}")
+                logger.info(f"{pad}{Colours.red}{branch_name} [remote deleted]{Colours.clear}")
                 if args.delete:
                     safe_to_delete = True
                     if current_branch == branch_name:
@@ -173,7 +173,7 @@ def main(dirs: List[str], args: argparse.Namespace):
                                                      capture_output=True)
                         if git_status.stdout.decode():
                             safe_to_delete = False
-                            logger.warning(f"{Colours.yellow}{pad2}Found uncommitted changes on current branch "
+                            logger.warning(f"{pad2}{Colours.yellow}Found uncommitted changes on current branch "
                                         f"{current_branch}, skipping delete of {branch_name}{Colours.clear}")
                         else:
                             logger.debug(f"{pad2}Switching from {current_branch} to {root_branch}")
@@ -181,19 +181,19 @@ def main(dirs: List[str], args: argparse.Namespace):
                                                         capture_output=True)
                             if switch_result.returncode != 0:
                                 safe_to_delete = False
-                                logger.error(f"{Colours.red}{pad2}Switch failed, skipping delete of "
+                                logger.error(f"{pad2}{Colours.red}Switch failed, skipping delete of "
                                              f"{branch_name}{Colours.clear}")
-                                logger.error(f"{Colours.red}{pad}{switch_result.stderr.decode()}{Colours.clear}")
+                                logger.error(f"{pad}{Colours.red}{switch_result.stderr.decode()}{Colours.clear}")
 
                     if safe_to_delete:
                         logger.info(f"{pad2}Deleting local branch {branch_name}")
                         del_result = subprocess.run([shutil.which("git"), "-C", dir, "branch", "-D", branch_name],
                                                     capture_output=True)
                         if del_result.returncode != 0:
-                            logger.error(f"{Colours.red}{pad}Unable to delete {branch_name}{Colours.clear}")
-                            logger.error(f"{Colours.red}{pad}{ff_result.stderr.decode()}{Colours.clear}")
+                            logger.error(f"{pad}{Colours.red}Unable to delete {branch_name}{Colours.clear}")
+                            logger.error(f"{pad}{Colours.red}{ff_result.stderr.decode()}{Colours.clear}")
             else:
-                logger.debug(f"{Colours.green}{pad}{branch_name} [up to date]{Colours.clear}")
+                logger.debug(f"{pad}{Colours.green}{branch_name} [up to date]{Colours.clear}")
         
         if args.remote:
             for remote_branch in remote_branches:
@@ -201,7 +201,7 @@ def main(dirs: List[str], args: argparse.Namespace):
                     continue 
                 basename = remote_branch.split("origin/")[-1]
                 if basename not in [b.split()[0].rstrip() for b in local_branches]:
-                    logger.info(f"{Colours.yellow}{pad}{basename} [remote only]{Colours.clear}")
+                    logger.info(f"{pad}{Colours.yellow}{basename} [remote only]{Colours.clear}")
                
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Recursively scan (optionally fetching & pruning) all git repos and display their status compared to their remote tracking branches.")
