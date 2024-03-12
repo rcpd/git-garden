@@ -8,6 +8,7 @@ from typing import Generator
 
 # TODO: get_dirs_with_depth
 # TODO: gone + remote only status
+# TODO: ff func (when implemented)
 
 
 @pytest.fixture(scope="session")

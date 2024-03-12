@@ -15,7 +15,7 @@ target-version = "py37" # not needed if your pyproject.toml has `project.require
 style = "sphinx"
 exclude = "venv|.tox|.git"
 
-# these are enforced as being provided through typing the signature elsewhere
+# these are already enforced through ruff (pydocstyle)
 arg-type-hints-in-docstring = false
 check-return-types = false
 check-yield-types = false

@@ -21,4 +21,5 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "venv", ".tox"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "classic"
+html_theme_options = {"sidebarwidth": 300}
 html_static_path = []

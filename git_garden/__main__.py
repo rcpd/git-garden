@@ -2,7 +2,7 @@ import os
 import argparse
 import logging
 
-from . import CustomFormatter, GitGarden
+from git_garden import CustomFormatter, GitGarden
 
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)

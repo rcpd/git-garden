@@ -4,7 +4,8 @@ import subprocess
 import shutil
 import argparse
 
-from typing import List
+from typing import List, Optional, Union
+from typing_extensions import Literal
 
 
 class GitGarden:
@@ -15,9 +16,23 @@ class GitGarden:
 
     :param logger: Logger to use for output.
     :param args: Command line arguments.
+    :param git: Path to git executable (attempts to resolve system "git" if not passed).
+    :raises RuntimeError: If Git installation not found.
     """
 
-    def __init__(self, logger: logging.Logger, args: argparse.Namespace) -> None:
+    def __init__(
+        self,
+        logger: logging.Logger,
+        args: argparse.Namespace,
+        git: Optional[str] = None,
+    ) -> None:
+        if git is None:
+            git = shutil.which("git")
+        if git is None or not os.path.exists(git):
+            raise RuntimeError("Git installation not found")
+        else:
+            self.git = git
+
         self.args = args
         self.logger = logger
         self.pad = _pad = "   "
@@ -32,6 +47,8 @@ class GitGarden:
                 if type(handler) is logging.StreamHandler:
                     handler.setLevel(logging.INFO)
 
+        self.colours = Colours()
+
     def get_dirs_with_depth(self, dir: str, depth: int = 3) -> List[str]:
         """
         Recursively search directories for git repos until a given depth.
@@ -42,7 +59,7 @@ class GitGarden:
         """
         dir = os.path.expanduser(dir)
 
-        dirs = []
+        dirs: List[str] = []
         if depth == 0:
             return dirs
 
@@ -95,13 +112,13 @@ class GitGarden:
         :return: Current branch name.
         """
         local_branches_raw = subprocess.check_output(
-            [shutil.which("git"), "-C", dir, "branch", "--show-current"]
+            [self.git, "-C", dir, "branch", "--show-current"]
         )
         return local_branches_raw.decode().replace("\n", "")
 
     def find_root_branch(
         self, local_branches: List[str], remote_branches: List[str]
-    ) -> str:
+    ) -> Union[str, None]:
         """
         Attempt to find the root branch (master or main) for a given git repo.
 
@@ -129,7 +146,7 @@ class GitGarden:
 
         if root_branch is None:
             self.logger.warning(
-                f"{self.pad}{Colours.yellow}Unable to determine root branch{Colours.clear}"
+                f"{self.pad}{self.colours.yellow}Unable to determine root branch{self.colours.clear}"
             )
 
         return root_branch
@@ -143,7 +160,7 @@ class GitGarden:
         """
         git_status = subprocess.check_output(
             [
-                shutil.which("git"),
+                self.git,
                 "-C",
                 dir,
                 "status",
@@ -164,10 +181,9 @@ class GitGarden:
         :return: Exit code from branch creation.
         """
         return subprocess.check_call(
-            [shutil.which("git"), "-C", dir, "branch", branch_name, root_branch]
+            [self.git, "-C", dir, "branch", branch_name, root_branch]
         )
 
-    # TODO: delete remote branch
     def delete_branch(
         self, branch_name: str, dir: str = ".", remote: bool = False
     ) -> int:
@@ -184,7 +200,7 @@ class GitGarden:
             self.logger.debug(f"{self.pad}Deleting remote branch: {branch_name}")
             return subprocess.run(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "-C",
                     dir,
                     "push",
@@ -197,7 +213,7 @@ class GitGarden:
             self.logger.info(f"{self.pad2}Deleting local branch {branch_name}")
             return subprocess.run(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "-C",
                     dir,
                     "branch",
@@ -218,7 +234,7 @@ class GitGarden:
             return self.parse_branches(
                 subprocess.check_output(
                     [
-                        shutil.which("git"),
+                        self.git,
                         "--no-pager",
                         "-C",
                         dir,
@@ -234,7 +250,7 @@ class GitGarden:
         return self.parse_branches(
             subprocess.check_output(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "--no-pager",
                     "-C",
                     dir,
@@ -258,7 +274,7 @@ class GitGarden:
             return self.parse_branches(
                 subprocess.check_output(
                     [
-                        shutil.which("git"),
+                        self.git,
                         "--no-pager",
                         "-C",
                         dir,
@@ -271,9 +287,7 @@ class GitGarden:
             )
         else:
             return self.parse_branches(
-                subprocess.check_output(
-                    [shutil.which("git"), "--no-pager", "-C", dir, "branch"]
-                )
+                subprocess.check_output([self.git, "--no-pager", "-C", dir, "branch"])
             )
 
     def purge_remote_branches(self, dir: str = ".") -> None:
@@ -303,16 +317,14 @@ class GitGarden:
             self.logger.debug(f"Fetching & pruning {dir}")
 
             return subprocess.run(
-                [shutil.which("git"), "-C", dir, "fetch", "--prune"],
+                [self.git, "-C", dir, "fetch", "--prune"],
                 capture_output=True,
             )
         else:
             self.logger.debug(f"Fetching {dir}")
-            return subprocess.run(
-                [shutil.which("git"), "-C", dir, "fetch"], capture_output=True
-            )
+            return subprocess.run([self.git, "-C", dir, "fetch"], capture_output=True)
 
-    def switch_branch(self, branch: str, dir: str = ".") -> subprocess.CompletedProcess:
+    def switch_branch(self, branch: str, dir: str = ".") -> Union[bytes, None]:
         """
         Switch to a branch.
 
@@ -323,7 +335,7 @@ class GitGarden:
         if not self.check_git_status():
             return subprocess.check_output(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "-C",
                     dir,
                     "switch",
@@ -332,9 +344,10 @@ class GitGarden:
             )
         else:
             self.logger.warning(
-                f"{self.pad2}{Colours.yellow}Switching precluded by uncommitted changes on "
-                f"current branch{Colours.clear}"
+                f"{self.pad2}{self.colours.yellow}Switching precluded by uncommitted changes on current branch"
+                f"{self.colours.clear}"
             )
+            return None
 
     def create_commit(self, message: str, dir: str = ".") -> None:
         """
@@ -344,7 +357,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         """
         subprocess.check_call(
-            [shutil.which("git"), "-C", dir, "commit", "--allow-empty", "-m", message]
+            [self.git, "-C", dir, "commit", "--allow-empty", "-m", message]
         )
 
     def delete_commit(self, dir: str = ".") -> None:
@@ -353,9 +366,7 @@ class GitGarden:
 
         :param dir: Current directory being processed.
         """
-        subprocess.check_call(
-            [shutil.which("git"), "-C", dir, "reset", "HEAD~", "--hard"]
-        )
+        subprocess.check_call([self.git, "-C", dir, "reset", "HEAD~", "--hard"])
 
     def push_branch(self, branch: str, force: bool = False, dir: str = ".") -> None:
         """
@@ -364,12 +375,11 @@ class GitGarden:
         :param branch: Branch to push.
         :param force: Switch for force push.
         :param dir: Current directory being processed.
-
         """
         if force:
             subprocess.check_call(
                 [
-                    shutil.which("git"),
+                    self.git,
                     "-C",
                     dir,
                     "push",
@@ -380,9 +390,7 @@ class GitGarden:
                 ]
             )
         else:
-            subprocess.check_call(
-                [shutil.which("git"), "-C", dir, "push", "-u", "origin", branch]
-            )
+            subprocess.check_call([self.git, "-C", dir, "push", "-u", "origin", branch])
 
     def main(self, dirs: List[str]) -> None:
         """
@@ -408,7 +416,6 @@ class GitGarden:
             local_branches_status = self.list_local_branches(dir, upstream=True)
 
             remote_branches = self.list_remote_branches(dir)
-            # remote_branches_status = self.list_remote_branches(dir, upstream=True) # FIXME: unused
 
             root_branch = self.find_root_branch(local_branches, remote_branches)
             current_branch = self.find_current_branch(dir)
@@ -416,11 +423,11 @@ class GitGarden:
             if root_branch is None or current_branch is None:
                 if self.args.ff:
                     self.logger.warning(
-                        f"{self.pad}{Colours.yellow}--ff will be skipped{Colours.clear}"
+                        f"{self.pad}{self.colours.yellow}--ff will be skipped{self.colours.clear}"
                     )
                 if self.args.delete:
                     self.logger.warning(
-                        f"{self.pad}{Colours.yellow}--delete will be skipped{Colours.clear}"
+                        f"{self.pad}{self.colours.yellow}--delete will be skipped{self.colours.clear}"
                     )
 
             for branch in local_branches_status:
@@ -429,36 +436,37 @@ class GitGarden:
 
                 if "HEAD" in branch:
                     self.logger.info(
-                        f"{self.pad}{Colours.yellow}{branch_name}{Colours.clear}"
+                        f"{self.pad}{self.colours.yellow}{branch_name}{self.colours.clear}"
                     )
                 elif "origin" not in branch:
                     self.logger.info(
-                        f"{self.pad}{Colours.yellow}{branch_name} [local only]{Colours.clear}"
+                        f"{self.pad}{self.colours.yellow}{branch_name} [local only]{self.colours.clear}"
                     )
                 elif "[ahead" in branch:
                     self.logger.debug(
-                        f"{self.pad}{Colours.yellow}{branch_name} {status}"
+                        f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}"
                     )
 
                 elif "[behind" in branch:
                     if self.args.ff and branch_name == root_branch:
                         self.logger.info(
-                            f"{self.pad}{Colours.yellow}{branch_name} {status}{Colours.clear}"
+                            f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
                         )
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
 
+                        # TODO: ff function
                         # attempt to fast-forward the current branch
                         # ff failure is not fatal (logged below)
                         if current_branch == root_branch:
                             ff_result = subprocess.run(
-                                [shutil.which("git"), "-C", dir, "pull", "--ff-only"],
+                                [self.git, "-C", dir, "pull", "--ff-only"],
                                 capture_output=True,
                             )
                         else:
                             # equivalent to a pull -ff-only (only works on non-current branch)
                             ff_result = subprocess.run(
                                 [
-                                    shutil.which("git"),
+                                    self.git,
                                     "-C",
                                     dir,
                                     "fetch",
@@ -470,19 +478,19 @@ class GitGarden:
 
                         if ff_result.returncode != 0:
                             self.logger.error(
-                                f"{self.pad2}{Colours.red}Unable to fast-forward {branch_name}{Colours.clear}"
+                                f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}{self.colours.clear}"
                             )
                             self.logger.error(
-                                f"{self.pad2}{Colours.red}{ff_result.stderr.decode()}{Colours.clear}"
+                                f"{self.pad2}{self.colours.red}{ff_result.stderr.decode()}{self.colours.clear}"
                             )
                     else:
                         self.logger.debug(
-                            f"{self.pad}{Colours.yellow}{branch_name} {status}{Colours.clear}"
+                            f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
                         )
 
                 elif "[gone]" in branch:
                     self.logger.info(
-                        f"{self.pad}{Colours.red}{branch_name} [remote deleted]{Colours.clear}"
+                        f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}"
                     )
                     if self.args.delete:
                         safe_to_delete = True
@@ -495,18 +503,21 @@ class GitGarden:
 
                             if switch_result is None:
                                 self.logger.warning(
-                                    f"{self.pad2}{Colours.yellow}Skipping delete of {branch_name}{Colours.clear}"
+                                    f"{self.pad2}{self.colours.yellow}Skipping delete of {branch_name}"
+                                    f"{self.colours.clear}"
                                 )
                             else:
                                 safe_to_delete = True
-                                current_branch = root_branch
+                                current_branch = (
+                                    root_branch if root_branch is not None else ""
+                                )
 
                         if safe_to_delete:
                             self.delete_branch(branch_name, dir=dir)
 
                 else:
                     self.logger.debug(
-                        f"{self.pad}{Colours.green}{branch_name} [up to date]{Colours.clear}"
+                        f"{self.pad}{self.colours.green}{branch_name} [up to date]{self.colours.clear}"
                     )
 
             if self.args.remote:
@@ -516,7 +527,7 @@ class GitGarden:
                     basename = remote_branch.split("origin/")[-1]
                     if basename not in [b.split()[0] for b in local_branches_status]:
                         self.logger.info(
-                            f"{self.pad}{Colours.yellow}{basename} [remote only]{Colours.clear}"
+                            f"{self.pad}{self.colours.yellow}{basename} [remote only]{self.colours.clear}"
                         )
 
 
@@ -527,11 +538,17 @@ class CustomFormatter(logging.Formatter):
 
     :param fmt: The format string for the log message.
     :param datefmt: The format string for the date in the log message.
-    :param style: The formatting style ('%' or '{' style).
+    :param style: The formatting style).
     """
 
-    def __init__(self, fmt: str, datefmt: str = None, style: str = "{") -> None:
+    def __init__(
+        self,
+        fmt: str,
+        datefmt: Optional[str] = None,
+        style: Literal["%", "{", "$"] = "{",
+    ) -> None:
         super().__init__(fmt, datefmt, style)
+        self.colours = Colours()
 
     def format(self, record: logging.LogRecord) -> str:
         """
@@ -551,11 +568,11 @@ class CustomFormatter(logging.Formatter):
         :return: The parsed log message.
         """
         message = (
-            message.replace(Colours.yellow, "")
-            .replace(Colours.red, "")
-            .replace(Colours.green, "")
+            message.replace(self.colours.yellow, "")
+            .replace(self.colours.red, "")
+            .replace(self.colours.green, "")
         )
-        message = message.replace(Colours.clear, "")
+        message = message.replace(self.colours.clear, "")
         return message
 
 
@@ -565,7 +582,8 @@ class Colours:
     Colour table: https://stackoverflow.com/a/21786287/10639133.
     """
 
-    yellow = "\x1b[0;33;40m"
-    red = "\x1b[0;31;40m"
-    green = "\x1b[0;32;40m"
-    clear = "\x1b[0m"
+    def __init__(self) -> None:
+        self.yellow = "\x1b[0;33;40m"
+        self.red = "\x1b[0;31;40m"
+        self.green = "\x1b[0;32;40m"
+        self.clear = "\x1b[0m"
