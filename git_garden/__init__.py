@@ -3,9 +3,13 @@ import logging
 import subprocess
 import shutil
 import argparse
+import sys
 
-from typing import List, Optional, Union
-from typing_extensions import Literal
+if sys.version_info < (3, 10):
+    from typing import List, Optional, Union
+    from typing_extensions import Literal
+else:
+    from typing import List, Optional, Union, Literal
 
 
 class GitGarden:

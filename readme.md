@@ -3,7 +3,10 @@
 ## Installation
 
 ```
-# no external dependencies other than git itself
+# typing-extensions only required on <= 3.9
+# otherwise no install required
+C:\Python37\python.exe -m venv venv37
+venv37\scripts\activate
 python -m pip install -r requirements.txt
 ```
 
@@ -54,6 +57,8 @@ git switch -c temp4; git push -f; git push origin --delete temp4; git reset HEAD
 
 git switch git-garden -f; git branch -D temp temp2 temp3 temp4 # cleanup
 git push origin --delete temp temp2 temp3 temp4 # cleanup
+
+C:\Python311\python.exe -m git_garden --ff --delete
 ```
 
 ## Pre-PR Checks
