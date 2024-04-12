@@ -24,7 +24,7 @@ logger.addHandler(file_handler)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "Recursively scan (optionally fetching & pruning) all git repos and display"
-        " their status compared to their remote tracking branches.",
+        " their status compared to their remote tracking branches.\n",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
