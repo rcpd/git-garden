@@ -11,6 +11,7 @@ from typing import Generator
 # TODO: ff func (when implemented)
 # TODO: allow configurable remote(s) (i.e. "origin")
 
+
 @pytest.fixture(scope="session")
 def logger() -> Generator[logging.Logger, None, None]:
     """
@@ -73,11 +74,13 @@ def dir(gg: GitGarden) -> Generator[str, None, None]:
 
 
 @pytest.fixture(scope="session")
-def root_branch():
+def root_branch() -> Generator[str, None, None]:
     """
-    Yield the root branch
+    Yield the root branch.
+    :yield: Name of the root branch for test project.
     """
     yield "main"
+
 
 def test_git_status(gg: GitGarden, dir: str) -> None:
     """
@@ -176,7 +179,9 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
     :param dir: Path to the git-garden directory.
     """
     if gg.check_git_status():
-        pytest.skip(f"test_branch_ahead: Test cannot be run while working tree is dirty.")
+        pytest.skip(
+            "test_branch_ahead: Test cannot be run while working tree is dirty."
+        )
 
     test_branch = "gitgarden-test-branch-ahead"
     gg.delete_branch(test_branch, dir=dir)  # preemptively delete branch if it exists
@@ -211,7 +216,9 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
     :param dir: Path to the git-garden directory.
     """
     if gg.check_git_status():
-        pytest.skip(f"test_branch_behind: Test cannot be run while working tree is dirty.")
+        pytest.skip(
+            "test_branch_behind: Test cannot be run while working tree is dirty."
+        )
 
     test_branch = "gitgarden-test-branch-behind"
     original_branch = gg.find_current_branch(dir=dir)

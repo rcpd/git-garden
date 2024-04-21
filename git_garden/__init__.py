@@ -189,7 +189,10 @@ class GitGarden:
         )
 
     def delete_branch(
-        self, branch_name: str, dir: str = ".", branch_type: Literal["local", "remote", "tracking"] = "local"
+        self,
+        branch_name: str,
+        dir: str = ".",
+        branch_type: Literal["local", "remote", "tracking"] = "local",
     ) -> int:
         """
         Delete a branch within a given git repo.
@@ -214,7 +217,9 @@ class GitGarden:
                 ]
             ).returncode
         elif branch_type == "tracking":
-            self.logger.debug(f"{self.pad}Deleting remote tracking branch: {branch_name}")
+            self.logger.debug(
+                f"{self.pad}Deleting remote tracking branch: {branch_name}"
+            )
             return subprocess.run(
                 [
                     self.git,
