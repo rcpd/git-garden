@@ -304,7 +304,7 @@ class GitGarden:
 
         # trying to batch the delete without rate limiting will crash git on very large repos
         for branch in self.list_remote_branches(dir):
-            if branch == "origin":
+            if branch in ("origin", "origin/master", "origin/main"):
                 continue
             self.delete_branch(branch, dir=dir, remote=True)
 

@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-addopts = "-s"
+addopts = "-rs"
 
 [tool.ruff]
 # The defaults + ANN (flake8-annotations for typing)
