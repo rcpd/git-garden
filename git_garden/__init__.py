@@ -189,18 +189,22 @@ class GitGarden:
         )
 
     def delete_branch(
-        self, branch_name: str, dir: str = ".", remote: bool = False
+        self,
+        branch_name: str,
+        dir: str = ".",
+        branch_type: Literal["local", "remote", "tracking"] = "local",
     ) -> int:
         """
         Delete a branch within a given git repo.
 
         :param branch_name: Branch to delete.
         :param dir: Current directory being processed.
-        :param remote: If set delete the remote branch, otherwise delete the local branch.
+        :param branch_type: Specify the branch type for deletion ("local", "remote", "tracking").
         :return: Exit code from branch creation.
+        :raises: AttributeError
         """
         # No check_call() as git returns non-zero for non-existent branches
-        if remote:
+        if branch_type == "remote":
             self.logger.debug(f"{self.pad}Deleting remote branch: {branch_name}")
             return subprocess.run(
                 [
@@ -213,7 +217,22 @@ class GitGarden:
                     branch_name,
                 ]
             ).returncode
-        else:
+        elif branch_type == "tracking":
+            self.logger.debug(
+                f"{self.pad}Deleting remote tracking branch: {branch_name}"
+            )
+            return subprocess.run(
+                [
+                    self.git,
+                    "-C",
+                    dir,
+                    "branch",
+                    "-D",
+                    "--remote",
+                    branch_name,
+                ]
+            ).returncode
+        elif branch_type == "local":
             self.logger.info(f"{self.pad2}Deleting local branch {branch_name}")
             return subprocess.run(
                 [
@@ -225,6 +244,8 @@ class GitGarden:
                     branch_name,
                 ]
             ).returncode
+        else:
+            raise AttributeError(f"Encountered unexpected branch_type: {branch_type}")
 
     def list_remote_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
         """
@@ -306,7 +327,7 @@ class GitGarden:
         for branch in self.list_remote_branches(dir):
             if branch == "origin":
                 continue
-            self.delete_branch(branch, dir=dir, remote=True)
+            self.delete_branch(branch, dir=dir, branch_type="tracking")
 
     def fetch(self, dir: str = ".", prune: bool = True) -> subprocess.CompletedProcess:
         """

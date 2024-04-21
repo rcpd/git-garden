@@ -9,6 +9,7 @@ from typing import Generator
 # TODO: get_dirs_with_depth
 # TODO: gone + remote only status
 # TODO: ff func (when implemented)
+# TODO: allow configurable remote(s) (i.e. "origin")
 
 
 @pytest.fixture(scope="session")
@@ -72,6 +73,15 @@ def dir(gg: GitGarden) -> Generator[str, None, None]:
     yield os.path.join(gg.args.directory, "git-garden")
 
 
+@pytest.fixture(scope="session")
+def root_branch() -> Generator[str, None, None]:
+    """
+    Yield the root branch.
+    :yield: Name of the root branch for test project.
+    """
+    yield "main"
+
+
 def test_git_status(gg: GitGarden, dir: str) -> None:
     """
     Inject a change into the working tree and check that the status is dirty.
@@ -109,7 +119,7 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
     assert f"origin/{branch}" in gg.list_remote_branches(dir=dir)
 
     gg.delete_branch(branch, dir=dir)
-    gg.delete_branch(branch, remote=True, dir=dir)
+    gg.delete_branch(branch, branch_type="remote", dir=dir)
     gg.fetch(prune=True, dir=dir)
 
     assert branch not in gg.list_local_branches(dir=dir)
@@ -146,7 +156,7 @@ def test_find_root_branch(gg: GitGarden, dir: str) -> None:
     )
 
 
-def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
+def test_fetch_and_purge(gg: GitGarden, dir: str, root_branch: str) -> None:
     """
     Run GitGarden with --purge.
 
@@ -169,7 +179,9 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
     :param dir: Path to the git-garden directory.
     """
     if gg.check_git_status():
-        pytest.skip("Test cannot be run while working tree is dirty.")
+        pytest.skip(
+            "test_branch_ahead: Test cannot be run while working tree is dirty."
+        )
 
     test_branch = "gitgarden-test-branch-ahead"
     gg.delete_branch(test_branch, dir=dir)  # preemptively delete branch if it exists
@@ -192,7 +204,7 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
             assert "[ahead" in branch
 
     gg.delete_branch(test_branch, dir=dir)
-    gg.delete_branch(test_branch, remote=True, dir=dir)
+    gg.delete_branch(test_branch, branch_type="remote", dir=dir)
     gg.fetch(prune=True, dir=dir)
 
 
@@ -204,7 +216,9 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
     :param dir: Path to the git-garden directory.
     """
     if gg.check_git_status():
-        pytest.skip("Test cannot be run while working tree is dirty.")
+        pytest.skip(
+            "test_branch_behind: Test cannot be run while working tree is dirty."
+        )
 
     test_branch = "gitgarden-test-branch-behind"
     original_branch = gg.find_current_branch(dir=dir)
@@ -231,7 +245,7 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
             assert "[behind" in branch
 
     gg.delete_branch(test_branch, dir=dir)
-    gg.delete_branch(test_branch, remote=True, dir=dir)
+    gg.delete_branch(test_branch, branch_type="remote", dir=dir)
     gg.fetch(prune=True, dir=dir)
 
 

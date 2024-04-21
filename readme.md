@@ -58,7 +58,7 @@ git switch -c temp4; git push -f; git push origin --delete temp4; git reset HEAD
 git switch git-garden -f; git branch -D temp temp2 temp3 temp4 # cleanup
 git push origin --delete temp temp2 temp3 temp4 # cleanup
 
-C:\Python311\python.exe -m git_garden --ff --delete
+C:\Python311\python.exe -m git_garden --ff --delete --remote
 ```
 
 ## Pre-PR Checks
