@@ -1,3 +1,8 @@
+[project]
+name = "git-garden"
+dynamic = ["version"]
+requires-python = ">=3.8"
+
 [tool.pytest.ini_options]
 addopts = "-rs"
 
@@ -9,7 +14,6 @@ lint.select = ["E4", "E7", "E9", "F", "ANN", "D101", "D102", "D103", "D106", "D2
 
 # ANN101: Ignore requirement for "self" refs to be typed (Self type not introduced until py3.11 [PEP 673])
 lint.ignore = ["ANN101", ] 
-target-version = "py37" # not needed if your pyproject.toml has `project.requires-python`
 
 [tool.pydoclint]
 style = "sphinx"

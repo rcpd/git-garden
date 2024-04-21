@@ -199,8 +199,9 @@ class GitGarden:
 
         :param branch_name: Branch to delete.
         :param dir: Current directory being processed.
-        :param remote: If set delete the remote branch, otherwise delete the local branch.
+        :param branch_type: Specify the branch type for deletion ("local", "remote", "tracking").
         :return: Exit code from branch creation.
+        :raises: AttributeError
         """
         # No check_call() as git returns non-zero for non-existent branches
         if branch_type == "remote":
