@@ -513,7 +513,7 @@ class GitGarden:
                             f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
                         )
 
-                elif "[gone]" in branch:
+                elif "[gone" in branch:
                     self.logger.info(
                         f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}"
                     )
