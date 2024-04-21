@@ -116,7 +116,7 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
     assert f"origin/{branch}" in gg.list_remote_branches(dir=dir)
 
     gg.delete_branch(branch, dir=dir)
-    gg.delete_branch(branch, remote=True, dir=dir)
+    gg.delete_branch(branch, branch_type="remote", dir=dir)
     gg.fetch(prune=True, dir=dir)
 
     assert branch not in gg.list_local_branches(dir=dir)
@@ -161,7 +161,7 @@ def test_fetch_and_purge(gg: GitGarden, dir: str, root_branch: str) -> None:
     :param dir: Path to the git-garden directory.
     """
     gg.purge_remote_branches(dir=dir)
-    assert gg.list_remote_branches(dir=dir) == [f"origin/{root_branch}"]
+    assert gg.list_remote_branches(dir=dir) == []
 
     gg.fetch(dir)  # restore remote branches
     assert "main" in gg.list_local_branches(dir=dir)
@@ -199,7 +199,7 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
             assert "[ahead" in branch
 
     gg.delete_branch(test_branch, dir=dir)
-    gg.delete_branch(test_branch, remote=True, dir=dir)
+    gg.delete_branch(test_branch, branch_type="remote", dir=dir)
     gg.fetch(prune=True, dir=dir)
 
 
@@ -238,7 +238,7 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
             assert "[behind" in branch
 
     gg.delete_branch(test_branch, dir=dir)
-    gg.delete_branch(test_branch, remote=True, dir=dir)
+    gg.delete_branch(test_branch, branch_type="remote", dir=dir)
     gg.fetch(prune=True, dir=dir)
 
 
