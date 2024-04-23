@@ -167,7 +167,7 @@ def test_fetch_and_purge(gg: GitGarden, dir: str, root_branch: str) -> None:
     gg.purge_remote_branches(dir=dir)
     assert gg.list_remote_branches(dir=dir) == []
 
-    gg.fetch(dir)  # restore remote branches
+    gg.fetch(dir, prune=False)  # restore remote branches
     assert "main" in gg.list_local_branches(dir=dir)
     assert "origin/main" in gg.list_remote_branches(dir=dir)
 
