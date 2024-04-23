@@ -43,10 +43,10 @@ def args() -> Generator[Namespace, None, None]:
         no_prune=False,
         include=["git-garden"],
         exclude=[],
-        remote=False,
-        purge=False,
-        ff=False,
-        delete=False,
+        remote=True,
+        purge=True,
+        ff=True,
+        delete=True,
     )
 
 
