@@ -552,51 +552,6 @@ class GitGarden:
                         )
 
 
-class CustomFormatter(logging.Formatter):
-    """
-    This formatter extends the base logging.Formatter and provides a method for custom parsing of log messages before
-    they are emitted.
-
-    :param fmt: The format string for the log message.
-    :param datefmt: The format string for the date in the log message.
-    :param style: The formatting style).
-    """
-
-    def __init__(
-        self,
-        fmt: str,
-        datefmt: Optional[str] = None,
-        style: Literal["%", "{", "$"] = "{",
-    ) -> None:
-        super().__init__(fmt, datefmt, style)
-        self.colours = Colours()
-
-    def format(self, record: logging.LogRecord) -> str:
-        """
-        Format the specified record, including custom parsing of the log message.
-
-        :param record: The log record to be formatted.
-        :return: The formatted log message.
-        """
-        record.msg = self.strip_colours(record.msg)
-        return super().format(record)
-
-    def strip_colours(self, message: str) -> str:
-        """
-        Strip the ANSI colour codes from the log message.
-
-        :param message: The original log message.
-        :return: The parsed log message.
-        """
-        message = (
-            message.replace(self.colours.yellow, "")
-            .replace(self.colours.red, "")
-            .replace(self.colours.green, "")
-        )
-        message = message.replace(self.colours.clear, "")
-        return message
-
-
 class Colours:
     """
     May require calling os.system("color") to enable ANSI codes on Windows.
