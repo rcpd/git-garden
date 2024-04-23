@@ -6,9 +6,13 @@ from git_garden import GitGarden
 from argparse import Namespace
 from typing import Generator
 
+# top level funcs done
 # TODO: get_dirs_with_depth
+# TODO: ff
+# TODO: parse_branches
+# TODO: find_current_branch
+
 # TODO: gone + remote only status
-# TODO: ff func (when implemented)
 # TODO: allow configurable remote(s) (i.e. "origin")
 
 
@@ -82,7 +86,7 @@ def root_branch() -> Generator[str, None, None]:
     yield "main"
 
 
-def test_git_status(gg: GitGarden, dir: str) -> None:
+def test_check_git_status(gg: GitGarden, dir: str) -> None:
     """
     Inject a change into the working tree and check that the status is dirty.
     Revert the change before attesting the state.
@@ -134,14 +138,14 @@ def test_list_branches(gg: GitGarden, dir: str) -> None:
     :param dir: Path to the git-garden directory.
     """
     gg.create_branch("'quote-branch'")
+    assert "'quote-branch'" in gg.list_local_branches(dir=dir)
+    gg.delete_branch("'quote-branch'")
 
     assert "main" in gg.list_local_branches(dir=dir)
     assert "main origin/main" in gg.list_local_branches(dir=dir, upstream=True)
+
     assert "origin/main" in gg.list_remote_branches(dir=dir)
     assert "origin/main" in gg.list_remote_branches(dir=dir, upstream=True)
-    assert "'quote-branch'" in gg.list_local_branches(dir=dir)
-
-    gg.delete_branch("'quote-branch'")
 
 
 def test_find_root_branch(gg: GitGarden, dir: str) -> None:
