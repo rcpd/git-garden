@@ -130,23 +130,18 @@ class GitGarden:
         :param remote_branches: List of remote branches.
         :return: Root branch name.
         """
+        root_types = ["master", "main"]
         root_branch = None
-        for branch in remote_branches:
-            if branch.split()[0] == "origin/master":
-                root_branch = "master"
+        
+        # attempt to find root branch in local + remotes
+        for branch in local_branches + remote_branches:
+            if root_branch is None:
+                for root in root_types:
+                    if branch.split()[0] in (root, f"origin/{root}"):
+                        root_branch = root
+                        break
+            else:
                 break
-            elif branch.split()[0] == "origin/main":
-                root_branch = "main"
-                break
-
-        if root_branch is None:
-            for branch in local_branches:
-                if branch.split()[0] == "master":
-                    root_branch = "master"
-                    break
-                elif branch.split()[0] == "main":
-                    root_branch = "main"
-                    break
 
         if root_branch is None:
             self.logger.warning(
