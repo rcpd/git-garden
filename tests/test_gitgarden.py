@@ -38,7 +38,7 @@ def args() -> Generator[Namespace, None, None]:
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         ),
         depth=3,
-        quiet=False,
+        quiet=True,
         no_fetch=False,
         no_prune=False,
         include=["git-garden"],
@@ -138,6 +138,7 @@ def test_list_branches(gg: GitGarden, dir: str) -> None:
     assert "main" in gg.list_local_branches(dir=dir)
     assert "main origin/main" in gg.list_local_branches(dir=dir, upstream=True)
     assert "origin/main" in gg.list_remote_branches(dir=dir)
+    assert "origin/main" in gg.list_remote_branches(dir=dir, upstream=True)
     assert "'quote-branch'" in gg.list_local_branches(dir=dir)
 
     gg.delete_branch("'quote-branch'")

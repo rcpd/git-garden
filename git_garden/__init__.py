@@ -103,7 +103,7 @@ class GitGarden:
         ][:-1]
         if upstream:
             return [
-                branch[1:-2] for branch in branches
+                branch[1:-2].strip() for branch in branches
             ]  # trim additional padding/quote
         else:
             return branches
@@ -270,7 +270,8 @@ class GitGarden:
                         "--format",
                         "'%(refname:short) %(upstream:short) %(upstream:track)'",
                     ]
-                )
+                ),
+                upstream=upstream
             )
         return self.parse_branches(
             subprocess.check_output(
