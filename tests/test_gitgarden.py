@@ -257,7 +257,7 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
 
 def test_git_garden_module() -> None:
     """
-    Test module execution (dry run)
+    Test module execution (dry run).
     """
     # patch sys.argv with git-garden cli params for dry run
     original_argv = sys.argv
@@ -265,6 +265,6 @@ def test_git_garden_module() -> None:
 
     # mimic -m execution
     runpy.run_module("git_garden", run_name="__main__", alter_sys=True)
-    
+
     # restore sys.argv
     sys.argv = original_argv

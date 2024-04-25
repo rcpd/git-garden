@@ -10,6 +10,7 @@ if sys.version_info < (3, 10):
 else:
     from typing import Optional, Literal
 
+
 class CustomFormatter(logging.Formatter):
     """
     This formatter extends the base logging.Formatter and provides a method for custom parsing of log messages before
@@ -53,7 +54,8 @@ class CustomFormatter(logging.Formatter):
         )
         message = message.replace(self.colours.clear, "")
         return message
-    
+
+
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
 logger.addHandler(

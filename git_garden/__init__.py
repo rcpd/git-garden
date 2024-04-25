@@ -132,7 +132,7 @@ class GitGarden:
         """
         root_types = ["master", "main"]
         root_branch = None
-        
+
         # attempt to find root branch in local + remotes
         for branch in local_branches + remote_branches:
             if root_branch is None:
@@ -266,7 +266,7 @@ class GitGarden:
                         "'%(refname:short) %(upstream:short) %(upstream:track)'",
                     ]
                 ),
-                upstream=upstream
+                upstream=upstream,
             )
         return self.parse_branches(
             subprocess.check_output(
