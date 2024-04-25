@@ -9,8 +9,6 @@ from argparse import Namespace
 from typing import Generator
 
 # TODO: ff
-# TODO: parse_branches
-
 # TODO: gone + remote only status
 
 
@@ -84,6 +82,24 @@ def root_branch() -> Generator[str, None, None]:
     """
     yield "main"
 
+
+def test_parse_branches(gg: GitGarden) -> None:
+    """
+    Test "git branch" parsing.
+
+    :param gg: GitGarden instance.
+    """ 
+    unformatted_local = "* foobar\n  main\n".encode()
+    formatted_local = "'foobar origin/foobar '\n'main origin/main '\n".encode()
+    unformatted_remote = "  origin/foobar\n  origin/main\n".encode()
+    formatted_remote = "'origin/foobar  '\n'origin/main  '\n".encode()
+
+    assert gg.parse_branches(unformatted_local) == ["foobar", "main"]
+    assert gg.parse_branches(formatted_local, upstream=True) == ["foobar origin/foobar", "main origin/main"]
+    assert gg.parse_branches(unformatted_remote) == ["origin/foobar", "origin/main"]
+    assert gg.parse_branches(formatted_remote, upstream=True) == ["origin/foobar", "origin/main"]
+
+
 def test_get_dirs_with_depth(gg: GitGarden, dir: str) -> None:
     """
     Test the .git search algorithm.
@@ -101,6 +117,7 @@ def test_get_dirs_with_depth(gg: GitGarden, dir: str) -> None:
     assert result[0] == repo
     
     shutil.rmtree(repo)
+
 
 def test_check_git_status(gg: GitGarden, dir: str) -> None:
     """
