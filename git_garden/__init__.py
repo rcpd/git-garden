@@ -103,7 +103,7 @@ class GitGarden:
         ][:-1]
         if upstream:
             return [
-                branch[1:-1].strip().split()[0] for branch in branches
+                branch[1:-1].strip() for branch in branches
             ]  # trim additional padding/quote
         else:
             return branches
@@ -414,6 +414,18 @@ class GitGarden:
         else:
             subprocess.check_call([self.git, "-C", dir, "push", "-u", "origin", branch])
 
+    def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]):
+        """
+        :param branch: Branch to check.
+        :param local_branches: List of local branches.
+        :param remote branches: List of remote branches.
+        """
+        basename = branch.split("origin/")[-1]
+        if basename not in local_branches and branch in remote_branches:
+            return True
+        else:
+            return False
+    
     def main(self, dirs: List[str]) -> None:
         """
         Execute the main logic of the script.
@@ -546,10 +558,9 @@ class GitGarden:
                 for remote_branch in remote_branches:
                     if "/HEAD" in remote_branch:
                         continue
-                    basename = remote_branch.split("origin/")[-1]
-                    if basename not in [b.split()[0] for b in local_branches_status]:
+                    if self.check_branch_remote_only(remote_branch, local_branches, remote_branches):
                         self.logger.info(
-                            f"{self.pad}{self.colours.yellow}{basename} [remote only]{self.colours.clear}"
+                            f"{self.pad}{self.colours.yellow}{branch.split('origin/')[-1]} [remote only]{self.colours.clear}"
                         )
 
 

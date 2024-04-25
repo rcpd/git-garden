@@ -9,7 +9,7 @@ from argparse import Namespace
 from typing import Generator
 
 # TODO: ff
-# TODO: gone + remote only status
+# TODO: remote only status
 
 
 @pytest.fixture(scope="session")
@@ -95,7 +95,7 @@ def test_parse_branches(gg: GitGarden) -> None:
     formatted_remote = "'origin/foobar  '\n'origin/main  '\n".encode()
 
     assert gg.parse_branches(unformatted_local) == ["foobar", "main"]
-    assert gg.parse_branches(formatted_local, upstream=True) == ["foobar", "main"]
+    assert gg.parse_branches(formatted_local, upstream=True) == ["foobar origin/foobar", "main origin/main"]
     assert gg.parse_branches(unformatted_remote) == ["origin/foobar", "origin/main"]
     assert gg.parse_branches(formatted_remote, upstream=True) == ["origin/foobar", "origin/main"]
 
@@ -285,6 +285,48 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
     gg.delete_branch(test_branch, dir=dir)
     gg.delete_branch(test_branch, branch_type="remote", dir=dir)
     gg.fetch(prune=True, dir=dir)
+
+
+def test_branch_gone(gg: GitGarden, dir: str) -> None:
+    """
+    Test the "gone" status of a branch.
+
+    :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
+    """
+    if gg.check_git_status():
+        pytest.skip(
+            "test_branch_behind: Test cannot be run while working tree is dirty."
+        )
+
+    test_branch = "gitgarden-test-branch-gone"
+    gg.create_branch(test_branch, dir=dir)
+    gg.push_branch(test_branch, dir=dir, force=True)
+    gg.delete_branch(test_branch, dir=dir, branch_type="remote")
+    branches = gg.list_local_branches(dir=dir, upstream=True)
+    
+    for branch in branches:
+        if branch.startswith(test_branch):
+            assert branch.endswith("[gone]")
+    
+    gg.delete_branch(test_branch, dir=dir, branch_type="local")
+
+
+def test_branch_remote_only(gg: GitGarden, dir: str) -> None:
+    """
+    Test the "remote" status of a branch.
+
+    :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
+    """
+    test_branch = "gitgarden-test-branch-remote-only"
+    gg.create_branch(test_branch, dir=dir)
+    gg.push_branch(test_branch, dir=dir, force=True)
+    gg.delete_branch(test_branch, dir=dir, branch_type="local")
+
+    assert gg.check_branch_remote_only("origin/" + test_branch, gg.list_local_branches(dir), gg.list_remote_branches(dir))
+
+    gg.delete_branch(test_branch, dir=dir, branch_type="remote")
 
 
 def test_git_garden_module() -> None:
