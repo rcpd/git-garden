@@ -132,11 +132,11 @@ class GitGarden:
         :return: Root branch name.
         """
         root_types = ["master", "main"]
-        root_branch = None
+        root_branch: str = ""
 
         # attempt to find root branch in local + remotes
         for branch in local_branches + remote_branches:
-            if root_branch is None:
+            if root_branch == "":
                 for root in root_types:
                     if branch.split()[0] in (root, f"origin/{root}"):
                         root_branch = root
@@ -144,7 +144,7 @@ class GitGarden:
             else:
                 break
 
-        if root_branch is None:
+        if root_branch == "":
             self.logger.warning(
                 f"{self.pad}{self.colours.yellow}Unable to determine root branch{self.colours.clear}"
             )
