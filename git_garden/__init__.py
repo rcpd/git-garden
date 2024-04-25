@@ -111,6 +111,7 @@ class GitGarden:
     def find_current_branch(self, dir: str = ".") -> str:
         """
         Find the current branch name.
+        Coverage note: This function can't be tested independently.
 
         :param dir: Current directory being processed.
         :return: Current branch name.

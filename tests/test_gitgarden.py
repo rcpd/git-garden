@@ -8,13 +8,10 @@ from git_garden import GitGarden
 from argparse import Namespace
 from typing import Generator
 
-# top level funcs done
 # TODO: ff
 # TODO: parse_branches
-# TODO: find_current_branch
 
 # TODO: gone + remote only status
-# TODO: allow configurable remote(s) (i.e. "origin")
 
 
 @pytest.fixture(scope="session")
@@ -87,24 +84,23 @@ def root_branch() -> Generator[str, None, None]:
     """
     yield "main"
 
-def test_get_dirs_with_depth(gg: GitGarden) -> None:
+def test_get_dirs_with_depth(gg: GitGarden, dir: str) -> None:
     """
     Test the .git search algorithm.
     Create an empty repo and delete it afterwards.
 
     :param gg: GitGarden instance.
     """
-    root = os.path.dirname(os.path.abspath(__file__))
-    dir = os.path.join(root, "tmp")
-    git = os.path.join(dir, ".git")
+    repo = os.path.join(dir, "tmp")
+    git = os.path.join(repo, ".git")
     os.makedirs(git, exist_ok=True)
 
     gg.args.include = ["tmp"]
     gg.args.exclude = []
-    result = gg.get_dirs_with_depth(dir) 
-    assert result[0] == dir
+    result = gg.get_dirs_with_depth(repo) 
+    assert result[0] == repo
     
-    shutil.rmtree(dir)
+    shutil.rmtree(repo)
 
 def test_check_git_status(gg: GitGarden, dir: str) -> None:
     """
@@ -181,7 +177,7 @@ def test_find_root_branch(gg: GitGarden, dir: str) -> None:
     )
 
 
-def test_fetch_and_purge(gg: GitGarden, dir: str, root_branch: str) -> None:
+def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
     """
     Run GitGarden with --purge.
 
