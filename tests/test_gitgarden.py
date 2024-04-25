@@ -95,7 +95,7 @@ def test_parse_branches(gg: GitGarden) -> None:
     formatted_remote = "'origin/foobar  '\n'origin/main  '\n".encode()
 
     assert gg.parse_branches(unformatted_local) == ["foobar", "main"]
-    assert gg.parse_branches(formatted_local, upstream=True) == ["foobar origin/foobar", "main origin/main"]
+    assert gg.parse_branches(formatted_local, upstream=True) == ["foobar", "main"]
     assert gg.parse_branches(unformatted_remote) == ["origin/foobar", "origin/main"]
     assert gg.parse_branches(formatted_remote, upstream=True) == ["origin/foobar", "origin/main"]
 

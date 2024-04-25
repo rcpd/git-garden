@@ -103,7 +103,7 @@ class GitGarden:
         ][:-1]
         if upstream:
             return [
-                branch[1:-1].strip() for branch in branches
+                branch[1:-1].strip().split()[0] for branch in branches
             ]  # trim additional padding/quote
         else:
             return branches
