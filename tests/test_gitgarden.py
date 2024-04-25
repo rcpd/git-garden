@@ -3,12 +3,12 @@ import logging
 import os
 import sys
 import runpy
+import shutil
 from git_garden import GitGarden
 from argparse import Namespace
 from typing import Generator
 
 # top level funcs done
-# TODO: get_dirs_with_depth
 # TODO: ff
 # TODO: parse_branches
 # TODO: find_current_branch
@@ -82,10 +82,29 @@ def dir(gg: GitGarden) -> Generator[str, None, None]:
 def root_branch() -> Generator[str, None, None]:
     """
     Yield the root branch.
+
     :yield: Name of the root branch for test project.
     """
     yield "main"
 
+def test_get_dirs_with_depth(gg: GitGarden) -> None:
+    """
+    Test the .git search algorithm.
+    Create an empty repo and delete it afterwards.
+
+    :param gg: GitGarden instance.
+    """
+    root = os.path.dirname(os.path.abspath(__file__))
+    dir = os.path.join(root, "tmp")
+    git = os.path.join(dir, ".git")
+    os.makedirs(git, exist_ok=True)
+
+    gg.args.include = ["tmp"]
+    gg.args.exclude = []
+    result = gg.get_dirs_with_depth(dir) 
+    assert result[0] == dir
+    
+    shutil.rmtree(dir)
 
 def test_check_git_status(gg: GitGarden, dir: str) -> None:
     """
