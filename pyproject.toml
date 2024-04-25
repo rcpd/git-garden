@@ -4,7 +4,7 @@ dynamic = ["version"]
 requires-python = ">=3.8"
 
 [tool.pytest.ini_options]
-addopts = "-rs --cov git_garden --cov-report xml:cov.xml --cov-report term"
+addopts = "-rs"
 
 [tool.coverage.run]
 source = ["./git_garden"]

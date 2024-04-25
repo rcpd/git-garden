@@ -68,6 +68,9 @@ C:\Python311\python.exe -m git_garden --ff --delete --remote
 ruff format .
 ruff check . --fix
 
+# tests / coverage (src)
+pytest --cov git_garden --cov-report xml:cov.xml --cov-report term
+
 # linting + tests (r/o)
 tox
 
