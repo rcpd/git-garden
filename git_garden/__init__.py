@@ -414,18 +414,21 @@ class GitGarden:
         else:
             subprocess.check_call([self.git, "-C", dir, "push", "-u", "origin", branch])
 
-    def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]):
+    def check_branch_remote_only(
+        self, branch: str, local_branches: List[str], remote_branches: List[str]
+    ) -> bool:
         """
         :param branch: Branch to check.
         :param local_branches: List of local branches.
-        :param remote branches: List of remote branches.
+        :param remote_branches: List of remote branches.
+        :return: Whether the branch only exists on the remote or not.
         """
         basename = branch.split("origin/")[-1]
         if basename not in local_branches and branch in remote_branches:
             return True
         else:
             return False
-    
+
     def main(self, dirs: List[str]) -> None:
         """
         Execute the main logic of the script.
@@ -558,7 +561,9 @@ class GitGarden:
                 for remote_branch in remote_branches:
                     if "/HEAD" in remote_branch:
                         continue
-                    if self.check_branch_remote_only(remote_branch, local_branches, remote_branches):
+                    if self.check_branch_remote_only(
+                        remote_branch, local_branches, remote_branches
+                    ):
                         self.logger.info(
                             f"{self.pad}{self.colours.yellow}{branch.split('origin/')[-1]} [remote only]{self.colours.clear}"
                         )

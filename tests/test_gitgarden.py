@@ -9,7 +9,6 @@ from argparse import Namespace
 from typing import Generator
 
 # TODO: ff
-# TODO: remote only status
 
 
 @pytest.fixture(scope="session")
@@ -88,16 +87,22 @@ def test_parse_branches(gg: GitGarden) -> None:
     Test "git branch" parsing.
 
     :param gg: GitGarden instance.
-    """ 
+    """
     unformatted_local = "* foobar\n  main\n".encode()
     formatted_local = "'foobar origin/foobar '\n'main origin/main '\n".encode()
     unformatted_remote = "  origin/foobar\n  origin/main\n".encode()
     formatted_remote = "'origin/foobar  '\n'origin/main  '\n".encode()
 
     assert gg.parse_branches(unformatted_local) == ["foobar", "main"]
-    assert gg.parse_branches(formatted_local, upstream=True) == ["foobar origin/foobar", "main origin/main"]
+    assert gg.parse_branches(formatted_local, upstream=True) == [
+        "foobar origin/foobar",
+        "main origin/main",
+    ]
     assert gg.parse_branches(unformatted_remote) == ["origin/foobar", "origin/main"]
-    assert gg.parse_branches(formatted_remote, upstream=True) == ["origin/foobar", "origin/main"]
+    assert gg.parse_branches(formatted_remote, upstream=True) == [
+        "origin/foobar",
+        "origin/main",
+    ]
 
 
 def test_get_dirs_with_depth(gg: GitGarden, dir: str) -> None:
@@ -113,9 +118,9 @@ def test_get_dirs_with_depth(gg: GitGarden, dir: str) -> None:
 
     gg.args.include = ["tmp"]
     gg.args.exclude = []
-    result = gg.get_dirs_with_depth(repo) 
+    result = gg.get_dirs_with_depth(repo)
     assert result[0] == repo
-    
+
     shutil.rmtree(repo)
 
 
@@ -304,11 +309,11 @@ def test_branch_gone(gg: GitGarden, dir: str) -> None:
     gg.push_branch(test_branch, dir=dir, force=True)
     gg.delete_branch(test_branch, dir=dir, branch_type="remote")
     branches = gg.list_local_branches(dir=dir, upstream=True)
-    
+
     for branch in branches:
         if branch.startswith(test_branch):
             assert branch.endswith("[gone]")
-    
+
     gg.delete_branch(test_branch, dir=dir, branch_type="local")
 
 
@@ -324,7 +329,11 @@ def test_branch_remote_only(gg: GitGarden, dir: str) -> None:
     gg.push_branch(test_branch, dir=dir, force=True)
     gg.delete_branch(test_branch, dir=dir, branch_type="local")
 
-    assert gg.check_branch_remote_only("origin/" + test_branch, gg.list_local_branches(dir), gg.list_remote_branches(dir))
+    assert gg.check_branch_remote_only(
+        "origin/" + test_branch,
+        gg.list_local_branches(dir),
+        gg.list_remote_branches(dir),
+    )
 
     gg.delete_branch(test_branch, dir=dir, branch_type="remote")
 
