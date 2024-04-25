@@ -1,7 +1,8 @@
 import pytest
 import logging
 import os
-
+import sys
+import runpy
 from git_garden import GitGarden
 from argparse import Namespace
 from typing import Generator
@@ -43,10 +44,10 @@ def args() -> Generator[Namespace, None, None]:
         ),
         depth=3,
         quiet=True,
-        no_fetch=False,
-        no_prune=False,
+        no_fetch=True,
+        no_prune=True,
         include=["git-garden"],
-        exclude=[],
+        exclude=["foobar"],
         remote=True,
         purge=True,
         ff=True,
@@ -254,10 +255,16 @@ def test_branch_behind(gg: GitGarden, dir: str) -> None:
     gg.fetch(prune=True, dir=dir)
 
 
-def test_git_garden(gg: GitGarden) -> None:
+def test_git_garden_module() -> None:
     """
-    Run GitGarden with default arguments (except limited to GitGarden repo).
+    Test module execution (dry run)
+    """
+    # patch sys.argv with git-garden cli params for dry run
+    original_argv = sys.argv
+    sys.argv = [sys.argv[0], "--directory", ".", "--quiet", "--no-fetch", "--no-prune"]
 
-    :param gg: GitGarden instance.
-    """
-    gg.main(gg.get_dirs_with_depth(gg.args.directory, depth=gg.args.depth))
+    # mimic -m execution
+    runpy.run_module("git_garden", run_name="__main__", alter_sys=True)
+    
+    # restore sys.argv
+    sys.argv = original_argv

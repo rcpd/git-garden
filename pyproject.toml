@@ -8,7 +8,6 @@ addopts = "-rs --cov git_garden --cov-report xml:cov.xml --cov-report term"
 
 [tool.coverage.run]
 source = ["./git_garden"]
-omit = ["./git_garden/__main__.py"]
 
 [tool.ruff]
 # The defaults + ANN (flake8-annotations for typing)
