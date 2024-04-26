@@ -312,7 +312,7 @@ class GitGarden:
                 subprocess.check_output([self.git, "--no-pager", "-C", dir, "branch"])
             )
 
-    def purge_remote_branches(self, dir: str = ".") -> None:
+    def purge_tracking_branches(self, dir: str = ".") -> None:
         """
         Recursively purge all remote tracking branches from a given git repo.
 
@@ -414,7 +414,7 @@ class GitGarden:
         else:
             subprocess.check_call([self.git, "-C", dir, "push", "-u", "origin", branch])
 
-    def fast_forward_branch(self, current_branch: str, root_branch: str) -> subprocess.CompletedProcess:
+    def fast_forward_branch(self, current_branch: str, root_branch: str, dir: str = ".") -> subprocess.CompletedProcess:
         """
         Attempt to fast-forward the current branch.
         Failure to fast-forward is not considered fatal.
@@ -428,7 +428,7 @@ class GitGarden:
                 capture_output=True,
             )
         else:
-            # equivalent to a pull -ff-only (only works on non-current branch)
+            # equivalent to a pull --ff-only (only works on non-current branch)
             return subprocess.run(
                 [
                     self.git,
@@ -436,7 +436,7 @@ class GitGarden:
                     dir,
                     "fetch",
                     "origin",
-                    f"{root_branch}:{root_branch}",
+                    f"{current_branch}:{current_branch}",
                 ],
                 capture_output=True,
             )
@@ -445,6 +445,8 @@ class GitGarden:
         self, branch: str, local_branches: List[str], remote_branches: List[str]
     ) -> bool:
         """
+        Check whether branch only exists on the remote.
+        
         :param branch: Branch to check.
         :param local_branches: List of local branches.
         :param remote_branches: List of remote branches.
@@ -464,7 +466,7 @@ class GitGarden:
         """
         for dir in dirs:
             if self.args.purge:
-                self.purge_remote_branches(dir)
+                self.purge_tracking_branches(dir)
             if self.args.no_fetch:
                 self.logger.debug(f"Scanning {dir}")
             elif self.args.no_prune:
@@ -531,7 +533,7 @@ class GitGarden:
                             f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
                         )
 
-                elif "[gone" in branch:
+                elif "[gone]" in branch:
                     self.logger.info(
                         f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}"
                     )
