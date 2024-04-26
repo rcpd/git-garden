@@ -48,10 +48,14 @@ python -m git_garden --help
 ruff format .
 ruff check . --fix
 
+# linting/type checking
+pydoclint .
+mypy -m git_garden
+
 # Pytest
 pytest --cov git_garden --cov-report xml:cov.xml --cov-report term
 
-# Linting
+# full testing
 tox
 
 # Generate Documentation

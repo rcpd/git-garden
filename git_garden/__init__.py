@@ -414,13 +414,17 @@ class GitGarden:
         else:
             subprocess.check_call([self.git, "-C", dir, "push", "-u", "origin", branch])
 
-    def fast_forward_branch(self, current_branch: str, root_branch: str, dir: str = ".") -> subprocess.CompletedProcess:
+    def fast_forward_branch(
+        self, current_branch: str, root_branch: str, dir: str = "."
+    ) -> subprocess.CompletedProcess:
         """
         Attempt to fast-forward the current branch.
         Failure to fast-forward is not considered fatal.
 
-        :param current_branch:
-        :param root_branch:
+        :param current_branch: Branch to fast-forward.
+        :param root_branch: Root branch.
+        :param dir: Current directory being processed.
+        :return: CompletedProcess result from fast-forward.
         """
         if current_branch == root_branch:
             return subprocess.run(
@@ -446,7 +450,7 @@ class GitGarden:
     ) -> bool:
         """
         Check whether branch only exists on the remote.
-        
+
         :param branch: Branch to check.
         :param local_branches: List of local branches.
         :param remote_branches: List of remote branches.
@@ -518,8 +522,10 @@ class GitGarden:
                         self.logger.info(
                             f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
                         )
-                        self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")                       
-                        ff_result = self.fast_forward_branch(current_branch, root_branch)
+                        self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
+                        ff_result = self.fast_forward_branch(
+                            current_branch, root_branch
+                        )
 
                         if ff_result.returncode != 0:
                             self.logger.error(

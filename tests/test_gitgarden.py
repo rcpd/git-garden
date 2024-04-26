@@ -8,8 +8,6 @@ from git_garden import GitGarden
 from argparse import Namespace
 from typing import Generator
 
-# TODO: ff
-
 
 @pytest.fixture(scope="session")
 def logger() -> Generator[logging.Logger, None, None]:
@@ -116,7 +114,7 @@ def test_get_dirs_with_depth(logger: logging.Logger, args: Namespace, dir: str) 
     gg = GitGarden(logger, args)
     gg.args.include = ["tmp"]
     gg.args.exclude = []
-    
+
     # create a fake test repo
     repo = os.path.join(dir, "tmp")
     git = os.path.join(repo, ".git")
@@ -124,7 +122,7 @@ def test_get_dirs_with_depth(logger: logging.Logger, args: Namespace, dir: str) 
 
     # attest the function & clean up the test repo
     try:
-        result = gg.get_dirs_with_depth(repo)   
+        result = gg.get_dirs_with_depth(repo)
         assert result[0] == repo
     finally:
         shutil.rmtree(repo)
@@ -142,13 +140,14 @@ def test_check_git_status(gg: GitGarden, dir: str) -> None:
     tmp_file = "test.tmp"
     with open(tmp_file, "w") as f:
         f.write("")
-    
+
     # attest the working tree state & clean up test file
     status = gg.check_git_status(dir=dir)
     try:
         assert status is True
     finally:
         os.remove(tmp_file)
+
 
 def test_branch_crud(gg: GitGarden, dir: str) -> None:
     """
@@ -160,7 +159,7 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
     # create local branch
     branch = "test-branch"
     gg.create_branch(branch, dir=dir)
-    
+
     try:
         # attest local only status of test branch
         assert branch in gg.list_local_branches(dir=dir)
@@ -197,7 +196,9 @@ def test_list_branches(gg: GitGarden, dir: str) -> None:
     try:
         # attest the state of the branch in local & remote
         assert branch in gg.list_local_branches(dir=dir)
-        assert f"{branch} origin/{branch}" in gg.list_local_branches(dir=dir, upstream=True)
+        assert f"{branch} origin/{branch}" in gg.list_local_branches(
+            dir=dir, upstream=True
+        )
         assert f"origin/{branch}" in gg.list_remote_branches(dir=dir)
         assert f"origin/{branch}" in gg.list_remote_branches(dir=dir, upstream=True)
     finally:
@@ -303,11 +304,11 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
         for branch in branches:
             if branch.startswith(test_branch):
                 assert "[behind" in branch
-        
+
         # attest the test branch is up to date
         gg.switch_branch(original_branch, dir=dir)
         gg.fast_forward_branch(test_branch, root_branch, dir=dir)
-        
+
         # attest the test branch is behind
         branches = gg.list_local_branches(dir=dir, upstream=True)
         for branch in branches:
@@ -380,7 +381,14 @@ def test_git_garden_module() -> None:
     original_argv = sys.argv
 
     try:
-        sys.argv = [sys.argv[0], "--directory", ".", "--quiet", "--no-fetch", "--no-prune"]
+        sys.argv = [
+            sys.argv[0],
+            "--directory",
+            ".",
+            "--quiet",
+            "--no-fetch",
+            "--no-prune",
+        ]
 
         # mimic -m execution
         runpy.run_module("git_garden", run_name="__main__", alter_sys=True)
