@@ -336,6 +336,42 @@ def test_branch_remote_only(gg: GitGarden, dir: str) -> None:
     )
 
     gg.delete_branch(test_branch, dir=dir, branch_type="remote")
+def test_fast_forward_branch(gg: GitGarden, dir: str) -> None:
+    """
+    Test fast-forwarding a branch.
+
+    :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
+    """
+    if gg.check_git_status():
+        pytest.skip(
+            "test_branch_behind: Test cannot be run while working tree is dirty."
+        )
+
+    test_branch = "gitgarden-test-branch-ff"
+    original_branch = gg.find_current_branch(dir=dir)
+    gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
+
+    gg.switch_branch(test_branch, dir=dir)
+    gg.create_commit("test commit", dir=dir)
+    gg.push_branch(
+        test_branch, force=True, dir=dir
+    )  # instantiate remote with +1 commit
+    gg.delete_commit(dir=dir)  # local branch is now behind
+
+    # attest the branch is up to date
+    branches = gg.list_local_branches(dir=dir, upstream=True)
+    for branch in branches:
+        if branch.startswith(test_branch):
+            assert "[behind" not in branch
+
+    if gg.check_git_status():
+        raise RuntimeError(
+            "Working tree was not dirty at the beginning of the test but is now)"
+        )
+    gg.switch_branch(original_branch, dir=dir)
+    gg.delete_branch(test_branch, dir=dir)
+    gg.delete_branch(test_branch, branch_type="remote", dir=dir)
 
 
 def test_git_garden_module() -> None:

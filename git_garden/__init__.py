@@ -414,6 +414,33 @@ class GitGarden:
         else:
             subprocess.check_call([self.git, "-C", dir, "push", "-u", "origin", branch])
 
+    def fast_forward_branch(self, current_branch: str, root_branch: str) -> subprocess.CompletedProcess:
+        """
+        Attempt to fast-forward the current branch.
+        Failure to fast-forward is not considered fatal.
+
+        :param current_branch:
+        :param root_branch:
+        """
+        if current_branch == root_branch:
+            return subprocess.run(
+                [self.git, "-C", dir, "pull", "--ff-only"],
+                capture_output=True,
+            )
+        else:
+            # equivalent to a pull -ff-only (only works on non-current branch)
+            return subprocess.run(
+                [
+                    self.git,
+                    "-C",
+                    dir,
+                    "fetch",
+                    "origin",
+                    f"{root_branch}:{root_branch}",
+                ],
+                capture_output=True,
+            )
+
     def check_branch_remote_only(
         self, branch: str, local_branches: List[str], remote_branches: List[str]
     ) -> bool:
@@ -489,29 +516,8 @@ class GitGarden:
                         self.logger.info(
                             f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
                         )
-                        self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
-
-                        # TODO: ff function
-                        # attempt to fast-forward the current branch
-                        # ff failure is not fatal (logged below)
-                        if current_branch == root_branch:
-                            ff_result = subprocess.run(
-                                [self.git, "-C", dir, "pull", "--ff-only"],
-                                capture_output=True,
-                            )
-                        else:
-                            # equivalent to a pull -ff-only (only works on non-current branch)
-                            ff_result = subprocess.run(
-                                [
-                                    self.git,
-                                    "-C",
-                                    dir,
-                                    "fetch",
-                                    "origin",
-                                    f"{root_branch}:{root_branch}",
-                                ],
-                                capture_output=True,
-                            )
+                        self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")                       
+                        ff_result = self.fast_forward_branch(current_branch, root_branch)
 
                         if ff_result.returncode != 0:
                             self.logger.error(
