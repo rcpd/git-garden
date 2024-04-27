@@ -193,7 +193,7 @@ def test_list_branches(gg: GitGarden, dir: str) -> None:
         assert f"origin/{branch}" in gg.list_remote_branches(dir=dir, upstream=True)
     finally:
         # cleanup the test branch
-        gg.delete_branch(branch)
+        gg.delete_branch(branch, branch_type="all", dir=dir)
 
 
 def test_find_root_branch(gg: GitGarden, dir: str) -> None:

@@ -6,7 +6,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "git_garden",
-            "args": ["--delete", "--ff", "--remote"]
+            "args": ["--delete", "--ff", "--remote", "--include", "git-garden"]
         }
     ]
 }

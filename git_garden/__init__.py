@@ -173,14 +173,14 @@ class GitGarden:
         self,
         branch_name: str,
         dir: str = ".",
-        branch_type: Literal["local", "remote", "tracking"] = "local",
+        branch_type: Literal["local", "remote", "tracking", "all"] = "local",
     ) -> int:
         """
         Delete a branch within a given git repo.
 
         :param branch_name: Branch to delete.
         :param dir: Current directory being processed.
-        :param branch_type: Specify the branch type for deletion ("local", "remote", "tracking").
+        :param branch_type: Specify the branch type for deletion.
         :return: Exit code from branch creation.
         :raises: AttributeError
         """
@@ -493,15 +493,16 @@ class GitGarden:
                                     f"{self.pad2}{self.colours.yellow}Skipping delete of {branch_name}"
                                     f"{self.colours.clear}"
                                 )
-                            else:
-                                self.delete_branch(branch_name, dir=dir)
+                                continue
+                        
+                        self.delete_branch(branch_name, dir=dir)
 
                 else:  # pragma: no cover # logs only
                     self.logger.debug(f"{self.pad}{self.colours.green}{branch_name} [up to date]{self.colours.clear}")
 
-            if self.args.remote:
+            if self.args.remote: # pragma: no cover, cannot repro / remote_only tested seperately
                 for remote_branch in remote_branches:
-                    if "/HEAD" in remote_branch:  # pragma: no cover, cannot repro
+                    if "/HEAD" in remote_branch:  
                         continue
                     if self.check_branch_remote_only(remote_branch, local_branches, remote_branches):
                         self.logger.info(
