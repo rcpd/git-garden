@@ -5,10 +5,9 @@ import shutil
 import argparse
 import sys
 
-if sys.version_info < (3, 10):
-    # omit from coverage (exercised in seperate tox runs)
-    from typing import List, Optional, Union  # pragma: no cover
-    from typing_extensions import Literal  # pragma: no cover
+if sys.version_info < (3, 10):  # pragma: no cover # exercised in seperate tox runs
+    from typing import List, Optional, Union
+    from typing_extensions import Literal
 else:
     from typing import List, Optional, Union, Literal
 
@@ -34,7 +33,7 @@ class GitGarden:
         if git is None:
             git = shutil.which("git")
         if git is None or not os.path.exists(git):
-            raise RuntimeError("Git installation not found")  # pragma: no cover
+            raise RuntimeError("Git installation not found") 
 
         self.git = git
         self.args = args
@@ -98,13 +97,9 @@ class GitGarden:
         """
         # strip current branch marker & padding
         # drop the last element which is always empty
-        branches = [
-            branch.strip().replace("* ", "") for branch in stdout.decode().split("\n")
-        ][:-1]
+        branches = [branch.strip().replace("* ", "") for branch in stdout.decode().split("\n")][:-1]
         if upstream:
-            return [
-                branch[1:-1].strip() for branch in branches
-            ]  # trim additional padding/quote
+            return [branch[1:-1].strip() for branch in branches]  # trim additional padding/quote
         else:
             return branches
 
@@ -116,14 +111,10 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Current branch name.
         """
-        local_branches_raw = subprocess.check_output(
-            [self.git, "-C", dir, "branch", "--show-current"]
-        )
+        local_branches_raw = subprocess.check_output([self.git, "-C", dir, "branch", "--show-current"])
         return local_branches_raw.decode().replace("\n", "")
 
-    def find_root_branch(
-        self, local_branches: List[str], remote_branches: List[str]
-    ) -> str:
+    def find_root_branch(self, local_branches: List[str], remote_branches: List[str]) -> str:
         """
         Attempt to find the root branch (master or main) for a given git repo.
 
@@ -145,9 +136,7 @@ class GitGarden:
                 break
 
         if root_branch == "":
-            self.logger.warning(
-                f"{self.pad}{self.colours.yellow}Unable to determine root branch{self.colours.clear}"
-            )
+            self.logger.warning(f"{self.pad}{self.colours.yellow}Unable to determine root branch{self.colours.clear}")
 
         return root_branch
 
@@ -169,9 +158,7 @@ class GitGarden:
         )
         return bool(git_status.decode())
 
-    def create_branch(
-        self, branch_name: str, root_branch: str = "main", dir: str = "."
-    ) -> int:
+    def create_branch(self, branch_name: str, root_branch: str = "main", dir: str = ".") -> int:
         """
         Create a branch within a given git repo.
 
@@ -180,9 +167,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Exit code from branch creation.
         """
-        return subprocess.check_call(
-            [self.git, "-C", dir, "branch", branch_name, root_branch]
-        )
+        return subprocess.check_call([self.git, "-C", dir, "branch", branch_name, root_branch])
 
     def delete_branch(
         self,
@@ -216,9 +201,7 @@ class GitGarden:
                 ]
             ).returncode
         elif branch_type == "tracking":
-            self.logger.debug(
-                f"{self.pad}Deleting remote tracking branch: {branch_name}"
-            )
+            self.logger.debug(f"{self.pad}Deleting remote tracking branch: {branch_name}")
             return subprocess.run(
                 [
                     self.git,
@@ -310,9 +293,7 @@ class GitGarden:
                 upstream=upstream,
             )
         else:
-            return self.parse_branches(
-                subprocess.check_output([self.git, "--no-pager", "-C", dir, "branch"])
-            )
+            return self.parse_branches(subprocess.check_output([self.git, "--no-pager", "-C", dir, "branch"]))
 
     def purge_tracking_branches(self, dir: str = ".") -> None:
         """
@@ -378,9 +359,7 @@ class GitGarden:
         :param message: Commit message.
         :param dir: Current directory being processed.
         """
-        subprocess.check_call(
-            [self.git, "-C", dir, "commit", "--allow-empty", "-m", message]
-        )
+        subprocess.check_call([self.git, "-C", dir, "commit", "--allow-empty", "-m", message])
 
     def delete_commit(self, dir: str = ".") -> None:
         """
@@ -427,9 +406,7 @@ class GitGarden:
             capture_output=True,
         )
 
-    def check_branch_remote_only(
-        self, branch: str, local_branches: List[str], remote_branches: List[str]
-    ) -> bool:
+    def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]) -> bool:
         """
         Check whether branch only exists on the remote.
 
@@ -450,7 +427,7 @@ class GitGarden:
 
         :param dirs: Directories containing git repos.
         """
-        for dir in dirs:           
+        for dir in dirs:
             if self.args.purge:
                 self.purge_tracking_branches(dir)
             if self.args.no_fetch:
@@ -466,38 +443,26 @@ class GitGarden:
             root_branch = self.find_root_branch(local_branches, remote_branches)
             current_branch = self.find_current_branch(dir)
 
-            if root_branch == "": # pragma: no cover
+            if root_branch == "":  # pragma: no cover # logs only
                 if self.args.ff:
-                    self.logger.warning(
-                        f"{self.pad}{self.colours.yellow}--ff will be skipped{self.colours.clear}"
-                    )
+                    self.logger.warning(f"{self.pad}{self.colours.yellow}--ff will be skipped{self.colours.clear}")
                 if self.args.delete:
-                    self.logger.warning(
-                        f"{self.pad}{self.colours.yellow}--delete will be skipped{self.colours.clear}"
-                    )
+                    self.logger.warning(f"{self.pad}{self.colours.yellow}--delete will be skipped{self.colours.clear}")
 
             for branch in local_branches_status:
                 branch_name = branch.split()[0]
                 status = "[" + branch.split("[")[-1]
 
-                if "HEAD" in branch: # pragma: no cover
-                    self.logger.info(
-                        f"{self.pad}{self.colours.yellow}{branch_name}{self.colours.clear}"
-                    )
-                elif "origin" not in branch: # pragma: no cover
-                    self.logger.info(
-                        f"{self.pad}{self.colours.yellow}{branch_name} [local only]{self.colours.clear}"
-                    )
-                elif "[ahead" in branch: # pragma: no cover
-                    self.logger.debug(
-                        f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}"
-                    )
+                if "HEAD" in branch:  # pragma: no cover # logs only
+                    self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name}{self.colours.clear}")
+                elif "origin" not in branch:  # pragma: no cover # logs only
+                    self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} [local only]{self.colours.clear}")
+                elif "[ahead" in branch:  # pragma: no cover # logs only
+                    self.logger.debug(f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}")
 
-                elif "[behind" in branch: # pragma: no cover
+                elif "[behind" in branch:  # pragma: no cover # ff tested seperately
                     if self.args.ff and branch_name == root_branch:
-                        self.logger.info(
-                            f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
-                        )
+                        self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
                         ff_result = self.fast_forward_branch(dir=dir)
 
@@ -509,20 +474,14 @@ class GitGarden:
                                 f"{self.pad2}{self.colours.red}{ff_result.stderr.decode()}{self.colours.clear}"
                             )
                     else:
-                        self.logger.debug(
-                            f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
-                        )
+                        self.logger.debug(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
 
-                elif "[gone]" in branch:
-                    self.logger.info(
-                        f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}"
-                    )
+                elif "[gone]" in branch:  # pragma: no cover # funcs tested seperately
+                    self.logger.info(f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}")
                     if self.args.delete and root_branch:
                         if current_branch == branch_name:
-                            self.logger.debug(
-                                f"{self.pad2}Switching from {current_branch} to {root_branch}"
-                            )
-                            
+                            self.logger.debug(f"{self.pad2}Switching from {current_branch} to {root_branch}")
+
                             switch_result = self.switch_branch(root_branch, dir=dir)
                             current_branch = self.find_current_branch(dir)
 
@@ -534,20 +493,17 @@ class GitGarden:
                             else:
                                 self.delete_branch(branch_name, dir=dir)
 
-                else:
-                    self.logger.debug(
-                        f"{self.pad}{self.colours.green}{branch_name} [up to date]{self.colours.clear}"
-                    )
+                else:  # pragma: no cover # logs only
+                    self.logger.debug(f"{self.pad}{self.colours.green}{branch_name} [up to date]{self.colours.clear}")
 
             if self.args.remote:
                 for remote_branch in remote_branches:
-                    if "/HEAD" in remote_branch:
+                    if "/HEAD" in remote_branch:  # pragma: no cover, cannot repro
                         continue
-                    if self.check_branch_remote_only(
-                        remote_branch, local_branches, remote_branches
-                    ):
+                    if self.check_branch_remote_only(remote_branch, local_branches, remote_branches):
                         self.logger.info(
-                            f"{self.pad}{self.colours.yellow}{branch.split('origin/')[-1]} [remote only]{self.colours.clear}"
+                            f"{self.pad}{self.colours.yellow}{branch.split('origin/')[-1]} [remote only]"
+                            f"{self.colours.clear}"
                         )
 
 

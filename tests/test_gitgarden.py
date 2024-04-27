@@ -28,9 +28,7 @@ def args() -> Generator[Namespace, None, None]:
     Note: these are a modified version of the defaults.
     """
     yield Namespace(
-        directory=os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        ),
+        directory=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         depth=3,
         quiet=True,
         no_fetch=True,
@@ -160,9 +158,7 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
     try:
         # attest local only status of test branch
         assert branch in gg.list_local_branches(dir=dir)
-        assert f"{branch} origin/{branch}" not in gg.list_local_branches(
-            dir=dir, upstream=True
-        )
+        assert f"{branch} origin/{branch}" not in gg.list_local_branches(dir=dir, upstream=True)
 
         # push test branch & attest the status of the remote
         gg.push_branch(branch, dir=dir)
@@ -194,9 +190,7 @@ def test_list_branches(gg: GitGarden, dir: str) -> None:
     try:
         # attest the state of the branch in local & remote
         assert branch in gg.list_local_branches(dir=dir)
-        assert f"{branch} origin/{branch}" in gg.list_local_branches(
-            dir=dir, upstream=True
-        )
+        assert f"{branch} origin/{branch}" in gg.list_local_branches(dir=dir, upstream=True)
         assert f"origin/{branch}" in gg.list_remote_branches(dir=dir)
         assert f"origin/{branch}" in gg.list_remote_branches(dir=dir, upstream=True)
     finally:
@@ -208,10 +202,7 @@ def test_find_root_branch(gg: GitGarden, dir: str) -> None:
     """
     Test identification of the root branch.
     """
-    assert (
-        gg.find_root_branch(gg.list_local_branches(dir), gg.list_remote_branches(dir))
-        == "main"
-    )
+    assert gg.find_root_branch(gg.list_local_branches(dir), gg.list_remote_branches(dir)) == "main"
     assert gg.find_root_branch([], []) == ""
 
 
@@ -239,9 +230,7 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
     """
     # skip tests that require branch switching if working tree is dirty
     if gg.check_git_status():
-        pytest.skip(
-            "test_branch_ahead: Test cannot be run while working tree is dirty."
-        )
+        pytest.skip("test_branch_ahead: Test cannot be run while working tree is dirty.")
 
     # test success case
     test_branch = "gitgarden-test-branch"
@@ -269,9 +258,7 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
     """
     # skip tests that require branch switching if working tree is dirty
     if gg.check_git_status():
-        pytest.skip(
-            "test_branch_ahead: Test cannot be run while working tree is dirty."
-        )
+        pytest.skip("test_branch_ahead: Test cannot be run while working tree is dirty.")
 
     # create a test branch in the "ahead" state
     test_branch = "gitgarden-test-branch-ahead"
@@ -301,9 +288,7 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
     """
     # skip tests that require branch switching if working tree is dirty
     if gg.check_git_status():
-        pytest.skip(
-            "test_branch_behind: Test cannot be run while working tree is dirty."
-        )
+        pytest.skip("test_branch_behind: Test cannot be run while working tree is dirty.")
 
     # create a test branch that is "behind" the remote
     test_branch = "gitgarden-test-branch-behind-and-ff"
@@ -311,9 +296,7 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
     gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
     gg.switch_branch(test_branch, dir=dir)
     gg.create_commit("test commit", dir=dir)
-    gg.push_branch(
-        test_branch, dir=dir, force=True
-    )  # instantiate remote with +1 commit
+    gg.push_branch(test_branch, dir=dir, force=True)  # instantiate remote with +1 commit
     gg.delete_commit(dir=dir)  # local branch is now behind
 
     try:
@@ -379,9 +362,7 @@ def test_branch_remote_only(gg: GitGarden, dir: str, root_branch: str) -> None:
             local_branches,
             remote_branches,
         )
-        assert not gg.check_branch_remote_only(
-            root_branch, local_branches, remote_branches
-        )
+        assert not gg.check_branch_remote_only(root_branch, local_branches, remote_branches)
     finally:
         # cleanup test branches
         gg.delete_branch(test_branch, dir=dir, branch_type="remote")
@@ -458,7 +439,11 @@ def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> N
     gg.args.include = []
     gg.args.exclude = []
     gg.args.remote = True
-    gg.args.purge = True,
-    gg.args.ff = True,
+    gg.args.purge = True
+    gg.args.ff = True
     gg.args.delete = True
     gg.main([dir])
+
+    with pytest.raises(RuntimeError):
+        gg = GitGarden(logger, args, git="foobar")
+        gg.main([dir])
