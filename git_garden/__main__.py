@@ -1,18 +1,62 @@
 import os
+import sys
 import argparse
 import logging
+from git_garden import GitGarden, Colours
 
-from git_garden import CustomFormatter, GitGarden
+if sys.version_info < (3, 10):  # pragma: no cover # exercised in seperate tox runs
+    from typing import Optional
+    from typing_extensions import Literal
+else:
+    from typing import Optional, Literal
+
+
+class CustomFormatter(logging.Formatter):
+    """
+    This formatter extends the base logging.Formatter and provides a method for custom parsing of log messages before
+    they are emitted.
+
+    :param fmt: The format string for the log message.
+    :param datefmt: The format string for the date in the log message.
+    :param style: The formatting style).
+    """
+
+    def __init__(
+        self,
+        fmt: str,
+        datefmt: Optional[str] = None,
+        style: Literal["%", "{", "$"] = "{",
+    ) -> None:
+        super().__init__(fmt, datefmt, style)
+        self.colours = Colours()
+
+    def format(self, record: logging.LogRecord) -> str:
+        """
+        Format the specified record, including custom parsing of the log message.
+
+        :param record: The log record to be formatted.
+        :return: The formatted log message.
+        """
+        record.msg = self.strip_colours(record.msg)
+        return super().format(record)
+
+    def strip_colours(self, message: str) -> str:
+        """
+        Strip the ANSI colour codes from the log message.
+
+        :param message: The original log message.
+        :return: The parsed log message.
+        """
+        message = message.replace(self.colours.yellow, "").replace(self.colours.red, "").replace(self.colours.green, "")
+        message = message.replace(self.colours.clear, "")
+        return message
+
 
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
-logger.addHandler(
-    logging.StreamHandler()
-)  # must be defined before file_handler to avoid formatting clash
+logger.addHandler(logging.StreamHandler())  # must be defined before file_handler to avoid formatting clash
 
-file_handler = logging.FileHandler(
-    os.path.join(os.path.dirname(__file__), "garden.log"), mode="w"
-)
+file_handler = logging.FileHandler(os.path.join(os.path.dirname(__file__), "garden.log"), mode="w")
 custom_fmtr = CustomFormatter(
     fmt="{asctime} - {name} - {levelname:^5s} - {message}",
     datefmt="%Y-%m-%d %H:%M:%S",
@@ -29,9 +73,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--directory",
-        default=os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        ),
+        default=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         type=str,
         help="(Optional) Name of the directory to process [Default: parent directory of project root]",
     )
@@ -44,20 +86,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--quiet",
         action="store_true",
-        help="(Optional) Display local/gone branches only"
-        " [Default: output all operations + branch status]",
+        help="(Optional) Display local/gone branches only" " [Default: output all operations + branch status]",
     )
     parser.add_argument(
         "--no-fetch",
         action="store_true",
-        help="(Optional) Skip fetching of remote tracking branches"
-        " [Default: fetch branches]",
+        help="(Optional) Skip fetching of remote tracking branches" " [Default: fetch branches]",
     )
     parser.add_argument(
         "--no-prune",
         action="store_true",
-        help="(Optional) Skip pruning of remote tracking branches"
-        " [Default: prune branches]",
+        help="(Optional) Skip pruning of remote tracking branches" " [Default: prune branches]",
     )
     parser.add_argument(
         "--include",
@@ -92,8 +131,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ff",
         action="store_true",
-        help="(Optional) Fast-forward master/main branch after fetch"
-        " [Default: fetch only]",
+        help="(Optional) Fast-forward master/main branch after fetch" " [Default: fetch only]",
     )
     parser.add_argument(
         "--delete",

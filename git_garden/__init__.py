@@ -5,7 +5,7 @@ import shutil
 import argparse
 import sys
 
-if sys.version_info < (3, 10):
+if sys.version_info < (3, 10):  # pragma: no cover # exercised in seperate tox runs
     from typing import List, Optional, Union
     from typing_extensions import Literal
 else:
@@ -34,9 +34,8 @@ class GitGarden:
             git = shutil.which("git")
         if git is None or not os.path.exists(git):
             raise RuntimeError("Git installation not found")
-        else:
-            self.git = git
 
+        self.git = git
         self.args = args
         self.logger = logger
         self.pad = _pad = "   "
@@ -98,31 +97,24 @@ class GitGarden:
         """
         # strip current branch marker & padding
         # drop the last element which is always empty
-        branches = [
-            branch.strip().replace("* ", "") for branch in stdout.decode().split("\n")
-        ][:-1]
+        branches = [branch.strip().replace("* ", "") for branch in stdout.decode().split("\n")][:-1]
         if upstream:
-            return [
-                branch[1:-2] for branch in branches
-            ]  # trim additional padding/quote
+            return [branch[1:-1].strip() for branch in branches]  # trim additional padding/quote
         else:
             return branches
 
     def find_current_branch(self, dir: str = ".") -> str:
         """
         Find the current branch name.
+        Coverage note: This function can't be tested independently.
 
         :param dir: Current directory being processed.
         :return: Current branch name.
         """
-        local_branches_raw = subprocess.check_output(
-            [self.git, "-C", dir, "branch", "--show-current"]
-        )
+        local_branches_raw = subprocess.check_output([self.git, "-C", dir, "branch", "--show-current"])
         return local_branches_raw.decode().replace("\n", "")
 
-    def find_root_branch(
-        self, local_branches: List[str], remote_branches: List[str]
-    ) -> Union[str, None]:
+    def find_root_branch(self, local_branches: List[str], remote_branches: List[str]) -> str:
         """
         Attempt to find the root branch (master or main) for a given git repo.
 
@@ -130,28 +122,21 @@ class GitGarden:
         :param remote_branches: List of remote branches.
         :return: Root branch name.
         """
-        root_branch = None
-        for branch in remote_branches:
-            if branch.split()[0] == "origin/master":
-                root_branch = "master"
-                break
-            elif branch.split()[0] == "origin/main":
-                root_branch = "main"
+        root_types = ["master", "main"]
+        root_branch: str = ""
+
+        # attempt to find root branch in local + remotes
+        for branch in local_branches + remote_branches:
+            if root_branch == "":
+                for root in root_types:
+                    if branch.split()[0] in (root, f"origin/{root}"):
+                        root_branch = root
+                        break
+            else:
                 break
 
-        if root_branch is None:
-            for branch in local_branches:
-                if branch.split()[0] == "master":
-                    root_branch = "master"
-                    break
-                elif branch.split()[0] == "main":
-                    root_branch = "main"
-                    break
-
-        if root_branch is None:
-            self.logger.warning(
-                f"{self.pad}{self.colours.yellow}Unable to determine root branch{self.colours.clear}"
-            )
+        if root_branch == "":
+            self.logger.warning(f"{self.pad}{self.colours.yellow}Unable to determine root branch{self.colours.clear}")
 
         return root_branch
 
@@ -173,9 +158,7 @@ class GitGarden:
         )
         return bool(git_status.decode())
 
-    def create_branch(
-        self, branch_name: str, root_branch: str = "main", dir: str = "."
-    ) -> int:
+    def create_branch(self, branch_name: str, root_branch: str = "main", dir: str = ".") -> int:
         """
         Create a branch within a given git repo.
 
@@ -184,9 +167,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Exit code from branch creation.
         """
-        return subprocess.check_call(
-            [self.git, "-C", dir, "branch", branch_name, root_branch]
-        )
+        return subprocess.check_call([self.git, "-C", dir, "branch", branch_name, root_branch])
 
     def delete_branch(
         self,
@@ -218,9 +199,7 @@ class GitGarden:
                 ]
             ).returncode
         elif branch_type == "tracking":
-            self.logger.debug(
-                f"{self.pad}Deleting remote tracking branch: {branch_name}"
-            )
+            self.logger.debug(f"{self.pad}Deleting remote tracking branch: {branch_name}")
             return subprocess.run(
                 [
                     self.git,
@@ -244,8 +223,13 @@ class GitGarden:
                     branch_name,
                 ]
             ).returncode
+        elif branch_type == "all":
+            returncode = self.delete_branch(branch_name, dir=dir, branch_type="local")
+            returncode += self.delete_branch(branch_name, dir=dir, branch_type="remote")
+            returncode += self.delete_branch(branch_name, dir=dir, branch_type="tracking")
+            return returncode
         else:
-            raise AttributeError(f"Encountered unexpected branch_type: {branch_type}")
+            raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
 
     def list_remote_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
         """
@@ -270,7 +254,8 @@ class GitGarden:
                         "--format",
                         "'%(refname:short) %(upstream:short) %(upstream:track)'",
                     ]
-                )
+                ),
+                upstream=upstream,
             )
         return self.parse_branches(
             subprocess.check_output(
@@ -311,11 +296,9 @@ class GitGarden:
                 upstream=upstream,
             )
         else:
-            return self.parse_branches(
-                subprocess.check_output([self.git, "--no-pager", "-C", dir, "branch"])
-            )
+            return self.parse_branches(subprocess.check_output([self.git, "--no-pager", "-C", dir, "branch"]))
 
-    def purge_remote_branches(self, dir: str = ".") -> None:
+    def purge_tracking_branches(self, dir: str = ".") -> None:
         """
         Recursively purge all remote tracking branches from a given git repo.
 
@@ -325,8 +308,6 @@ class GitGarden:
 
         # trying to batch the delete without rate limiting will crash git on very large repos
         for branch in self.list_remote_branches(dir):
-            if branch == "origin":
-                continue
             self.delete_branch(branch, dir=dir, branch_type="tracking")
 
     def fetch(self, dir: str = ".", prune: bool = True) -> subprocess.CompletedProcess:
@@ -381,9 +362,7 @@ class GitGarden:
         :param message: Commit message.
         :param dir: Current directory being processed.
         """
-        subprocess.check_call(
-            [self.git, "-C", dir, "commit", "--allow-empty", "-m", message]
-        )
+        subprocess.check_call([self.git, "-C", dir, "commit", "--allow-empty", "-m", message])
 
     def delete_commit(self, dir: str = ".") -> None:
         """
@@ -417,6 +396,34 @@ class GitGarden:
         else:
             subprocess.check_call([self.git, "-C", dir, "push", "-u", "origin", branch])
 
+    def fast_forward_branch(self, dir: str = ".") -> subprocess.CompletedProcess:
+        """
+        Attempt to fast-forward the current branch.
+        Failure to fast-forward is not considered fatal.
+
+        :param dir: Current directory being processed.
+        :return: CompletedProcess result from fast-forward.
+        """
+        return subprocess.run(
+            [self.git, "-C", dir, "pull", "--ff-only"],
+            capture_output=True,
+        )
+
+    def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]) -> bool:
+        """
+        Check whether branch only exists on the remote.
+
+        :param branch: Branch to check.
+        :param local_branches: List of local branches.
+        :param remote_branches: List of remote branches.
+        :return: Whether the branch only exists on the remote or not.
+        """
+        basename = branch.split("origin/")[-1]
+        if basename not in local_branches and branch in remote_branches:
+            return True
+        else:
+            return False
+
     def main(self, dirs: List[str]) -> None:
         """
         Execute the main logic of the script.
@@ -425,17 +432,11 @@ class GitGarden:
         """
         for dir in dirs:
             if self.args.purge:
-                self.purge_remote_branches(dir)
+                self.purge_tracking_branches(dir)
             if self.args.no_fetch:
                 self.logger.debug(f"Scanning {dir}")
-            elif self.args.no_prune:
-                proc = self.fetch(dir, prune=False)
             else:
-                proc = self.fetch(dir)
-
-            if not self.args.no_fetch:
-                if proc.stderr.decode().startswith("fatal: not a git repository"):
-                    continue
+                self.fetch(dir, prune=(not self.args.no_prune))
 
             local_branches = self.list_local_branches(dir)
             local_branches_status = self.list_local_branches(dir, upstream=True)
@@ -445,61 +446,28 @@ class GitGarden:
             root_branch = self.find_root_branch(local_branches, remote_branches)
             current_branch = self.find_current_branch(dir)
 
-            if root_branch is None or current_branch is None:
+            if root_branch == "":  # pragma: no cover # logs only
                 if self.args.ff:
-                    self.logger.warning(
-                        f"{self.pad}{self.colours.yellow}--ff will be skipped{self.colours.clear}"
-                    )
+                    self.logger.warning(f"{self.pad}{self.colours.yellow}--ff will be skipped{self.colours.clear}")
                 if self.args.delete:
-                    self.logger.warning(
-                        f"{self.pad}{self.colours.yellow}--delete will be skipped{self.colours.clear}"
-                    )
+                    self.logger.warning(f"{self.pad}{self.colours.yellow}--delete will be skipped{self.colours.clear}")
 
             for branch in local_branches_status:
                 branch_name = branch.split()[0]
                 status = "[" + branch.split("[")[-1]
 
-                if "HEAD" in branch:
-                    self.logger.info(
-                        f"{self.pad}{self.colours.yellow}{branch_name}{self.colours.clear}"
-                    )
-                elif "origin" not in branch:
-                    self.logger.info(
-                        f"{self.pad}{self.colours.yellow}{branch_name} [local only]{self.colours.clear}"
-                    )
-                elif "[ahead" in branch:
-                    self.logger.debug(
-                        f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}"
-                    )
+                if "HEAD" in branch:  # pragma: no cover # logs only
+                    self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name}{self.colours.clear}")
+                elif "origin" not in branch:  # pragma: no cover # logs only
+                    self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} [local only]{self.colours.clear}")
+                elif "[ahead" in branch:  # pragma: no cover # logs only
+                    self.logger.debug(f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}")
 
-                elif "[behind" in branch:
+                elif "[behind" in branch:  # pragma: no cover # ff tested seperately
                     if self.args.ff and branch_name == root_branch:
-                        self.logger.info(
-                            f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
-                        )
+                        self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
-
-                        # TODO: ff function
-                        # attempt to fast-forward the current branch
-                        # ff failure is not fatal (logged below)
-                        if current_branch == root_branch:
-                            ff_result = subprocess.run(
-                                [self.git, "-C", dir, "pull", "--ff-only"],
-                                capture_output=True,
-                            )
-                        else:
-                            # equivalent to a pull -ff-only (only works on non-current branch)
-                            ff_result = subprocess.run(
-                                [
-                                    self.git,
-                                    "-C",
-                                    dir,
-                                    "fetch",
-                                    "origin",
-                                    f"{root_branch}:{root_branch}",
-                                ],
-                                capture_output=True,
-                            )
+                        ff_result = self.fast_forward_branch(dir=dir)
 
                         if ff_result.returncode != 0:
                             self.logger.error(
@@ -509,22 +477,16 @@ class GitGarden:
                                 f"{self.pad2}{self.colours.red}{ff_result.stderr.decode()}{self.colours.clear}"
                             )
                     else:
-                        self.logger.debug(
-                            f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
-                        )
+                        self.logger.debug(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
 
-                elif "[gone" in branch:
-                    self.logger.info(
-                        f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}"
-                    )
-                    if self.args.delete:
-                        safe_to_delete = True
+                elif "[gone]" in branch:  # pragma: no cover # funcs tested seperately
+                    self.logger.info(f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}")
+                    if self.args.delete and root_branch:
                         if current_branch == branch_name:
-                            safe_to_delete = False
-                            self.logger.debug(
-                                f"{self.pad2}Switching from {current_branch} to {root_branch}"
-                            )
-                            switch_result = self.switch_branch(branch, dir=dir)
+                            self.logger.debug(f"{self.pad2}Switching from {current_branch} to {root_branch}")
+
+                            switch_result = self.switch_branch(root_branch, dir=dir)
+                            current_branch = self.find_current_branch(dir)
 
                             if switch_result is None:
                                 self.logger.warning(
@@ -532,73 +494,20 @@ class GitGarden:
                                     f"{self.colours.clear}"
                                 )
                             else:
-                                safe_to_delete = True
-                                current_branch = (
-                                    root_branch if root_branch is not None else ""
-                                )
+                                self.delete_branch(branch_name, dir=dir)
 
-                        if safe_to_delete:
-                            self.delete_branch(branch_name, dir=dir)
-
-                else:
-                    self.logger.debug(
-                        f"{self.pad}{self.colours.green}{branch_name} [up to date]{self.colours.clear}"
-                    )
+                else:  # pragma: no cover # logs only
+                    self.logger.debug(f"{self.pad}{self.colours.green}{branch_name} [up to date]{self.colours.clear}")
 
             if self.args.remote:
                 for remote_branch in remote_branches:
-                    if "/HEAD" in remote_branch:
+                    if "/HEAD" in remote_branch:  # pragma: no cover, cannot repro
                         continue
-                    basename = remote_branch.split("origin/")[-1]
-                    if basename not in [b.split()[0] for b in local_branches_status]:
+                    if self.check_branch_remote_only(remote_branch, local_branches, remote_branches):
                         self.logger.info(
-                            f"{self.pad}{self.colours.yellow}{basename} [remote only]{self.colours.clear}"
+                            f"{self.pad}{self.colours.yellow}{branch.split('origin/')[-1]} [remote only]"
+                            f"{self.colours.clear}"
                         )
-
-
-class CustomFormatter(logging.Formatter):
-    """
-    This formatter extends the base logging.Formatter and provides a method for custom parsing of log messages before
-    they are emitted.
-
-    :param fmt: The format string for the log message.
-    :param datefmt: The format string for the date in the log message.
-    :param style: The formatting style).
-    """
-
-    def __init__(
-        self,
-        fmt: str,
-        datefmt: Optional[str] = None,
-        style: Literal["%", "{", "$"] = "{",
-    ) -> None:
-        super().__init__(fmt, datefmt, style)
-        self.colours = Colours()
-
-    def format(self, record: logging.LogRecord) -> str:
-        """
-        Format the specified record, including custom parsing of the log message.
-
-        :param record: The log record to be formatted.
-        :return: The formatted log message.
-        """
-        record.msg = self.strip_colours(record.msg)
-        return super().format(record)
-
-    def strip_colours(self, message: str) -> str:
-        """
-        Strip the ANSI colour codes from the log message.
-
-        :param message: The original log message.
-        :return: The parsed log message.
-        """
-        message = (
-            message.replace(self.colours.yellow, "")
-            .replace(self.colours.red, "")
-            .replace(self.colours.green, "")
-        )
-        message = message.replace(self.colours.clear, "")
-        return message
 
 
 class Colours:

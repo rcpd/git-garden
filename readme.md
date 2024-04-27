@@ -5,8 +5,6 @@
 ```
 # typing-extensions only required on <= 3.9
 # otherwise no install required
-C:\Python37\python.exe -m venv venv37
-venv37\scripts\activate
 python -m pip install -r requirements.txt
 ```
 
@@ -43,41 +41,28 @@ python -m git_garden --delete
 python -m git_garden --help
 ```
 
-## Test Cases (Non-Exhaustive)
-
-```
-python -m git_garden
-python -m git_garden --no-fetch --no-prune --remote
-python -m git_garden --no-fetch --no-prune --ff --delete --quiet
-
-git switch -c temp # local only
-git switch -c temp2; git push -f; git push origin --delete temp2 # gone
-git switch -c temp3; git commit -m "Temp" --allow-empty; git push -f; git reset HEAD~ --hard # behind
-git switch -c temp4; git push -f; git push origin --delete temp4; git reset HEAD~ --soft # uncommitted changes
-
-git switch git-garden -f; git branch -D temp temp2 temp3 temp4 # cleanup
-git push origin --delete temp temp2 temp3 temp4 # cleanup
-
-C:\Python311\python.exe -m git_garden --ff --delete --remote
-```
-
 ## Pre-PR Checks
 
 ```
-# ruff (r/w)
+# Ruff (r/w, all files)
 ruff format .
 ruff check . --fix
 
-# linting + tests (r/o)
+# linting/type checking (main project only)
+pydoclint .
+mypy -m git_garden
+
+# pytest
+pytest --cov git_garden --cov-report xml:cov.xml --cov-report term
+
+# full testing
 tox
 
-# Generate Documentation
+# generate documentation (main project only)
 sphinx-build -b html . docs
 docs\index.html
 
-# compilation
+# compilation (pyd is imported / run as normal)
 mypyc git_garden\__init__.py
-cp -Path *.pyd, git_garden\__main__.py -Destination ..\ -Force
-python ..\__main__.py --directory D:\dev
-rm ..\*.pyd, ..\__main__.py, ..\garden.log
+python ..\__main__.py --remote --ff --delete
 ```
