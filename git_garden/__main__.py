@@ -5,8 +5,9 @@ import logging
 from git_garden import GitGarden, Colours
 
 if sys.version_info < (3, 10):
-    from typing import Optional
-    from typing_extensions import Literal
+    # omit from coverage (exercised in seperate tox runs)
+    from typing import Optional  # pragma: no cover
+    from typing_extensions import Literal  # pragma: no cover
 else:
     from typing import Optional, Literal
 

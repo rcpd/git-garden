@@ -6,8 +6,9 @@ import argparse
 import sys
 
 if sys.version_info < (3, 10):
-    from typing import List, Optional, Union
-    from typing_extensions import Literal
+    # omit from coverage (exercised in seperate tox runs)
+    from typing import List, Optional, Union  # pragma: no cover
+    from typing_extensions import Literal  # pragma: no cover
 else:
     from typing import List, Optional, Union, Literal
 
@@ -33,10 +34,9 @@ class GitGarden:
         if git is None:
             git = shutil.which("git")
         if git is None or not os.path.exists(git):
-            raise RuntimeError("Git installation not found")
-        else:
-            self.git = git
+            raise RuntimeError("Git installation not found")  # pragma: no cover
 
+        self.git = git
         self.args = args
         self.logger = logger
         self.pad = _pad = "   "
@@ -199,6 +199,8 @@ class GitGarden:
         :return: Exit code from branch creation.
         :raises: AttributeError
         """
+        # TODO: "all" use case
+        
         # No check_call() as git returns non-zero for non-existent branches
         if branch_type == "remote":
             self.logger.debug(f"{self.pad}Deleting remote branch: {branch_name}")
@@ -241,7 +243,7 @@ class GitGarden:
                 ]
             ).returncode
         else:
-            raise AttributeError(f"Encountered unexpected branch_type: {branch_type}")
+            raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
 
     def list_remote_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
         """
@@ -322,8 +324,6 @@ class GitGarden:
 
         # trying to batch the delete without rate limiting will crash git on very large repos
         for branch in self.list_remote_branches(dir):
-            if branch == "origin":
-                continue
             self.delete_branch(branch, dir=dir, branch_type="tracking")
 
     def fetch(self, dir: str = ".", prune: bool = True) -> subprocess.CompletedProcess:
@@ -414,36 +414,18 @@ class GitGarden:
         else:
             subprocess.check_call([self.git, "-C", dir, "push", "-u", "origin", branch])
 
-    def fast_forward_branch(
-        self, current_branch: str, root_branch: str, dir: str = "."
-    ) -> subprocess.CompletedProcess:
+    def fast_forward_branch(self, dir: str = ".") -> subprocess.CompletedProcess:
         """
         Attempt to fast-forward the current branch.
         Failure to fast-forward is not considered fatal.
 
-        :param current_branch: Branch to fast-forward.
-        :param root_branch: Root branch.
         :param dir: Current directory being processed.
         :return: CompletedProcess result from fast-forward.
         """
-        if current_branch == root_branch:
-            return subprocess.run(
-                [self.git, "-C", dir, "pull", "--ff-only"],
-                capture_output=True,
-            )
-        else:
-            # equivalent to a pull --ff-only (only works on non-current branch)
-            return subprocess.run(
-                [
-                    self.git,
-                    "-C",
-                    dir,
-                    "fetch",
-                    "origin",
-                    f"{current_branch}:{current_branch}",
-                ],
-                capture_output=True,
-            )
+        return subprocess.run(
+            [self.git, "-C", dir, "pull", "--ff-only"],
+            capture_output=True,
+        )
 
     def check_branch_remote_only(
         self, branch: str, local_branches: List[str], remote_branches: List[str]

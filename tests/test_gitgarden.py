@@ -80,6 +80,16 @@ def root_branch() -> Generator[str, None, None]:
     yield "main"
 
 
+def touch(tmp_file: str = "test.tmp"):
+    """
+    "touch" a file to dirty the working tree.
+
+    :param tmp_file: The path of the file to touch.
+    """
+    with open(tmp_file, "w") as f:
+        f.write("")
+
+
 def test_parse_branches(gg: GitGarden) -> None:
     """
     Test "git branch" parsing.
@@ -112,20 +122,34 @@ def test_get_dirs_with_depth(logger: logging.Logger, args: Namespace, dir: str) 
     """
     # create GG instance with custom args
     gg = GitGarden(logger, args)
-    gg.args.include = ["tmp"]
-    gg.args.exclude = []
+    gg.args.include = ["tmp_inc"]
+    gg.args.exclude = ["tmp_exc"]
 
-    # create a fake test repo
-    repo = os.path.join(dir, "tmp")
-    git = os.path.join(repo, ".git")
-    os.makedirs(git, exist_ok=True)
+    # create fake test repos
+    base_dir = os.path.join(dir, "tmp")
+    inc_repo = os.path.join(base_dir, "mid", "tmp_inc")
+    exc_repo = os.path.join(base_dir, "mid", "tmp_exc")
+    inc_git = os.path.join(inc_repo, ".git")
+    exc_git = os.path.join(exc_repo, ".git")
+    os.makedirs(inc_git, exist_ok=True)
+    os.makedirs(exc_git, exist_ok=True)
 
-    # attest the function & clean up the test repo
+    # attest test cases & clean up the test repo
     try:
-        result = gg.get_dirs_with_depth(repo)
-        assert result[0] == repo
+        # depth=0
+        assert gg.get_dirs_with_depth(base_dir, depth=0) == []
+
+        # multi-level search
+        result = gg.get_dirs_with_depth(base_dir)
+        assert inc_repo in result
+        assert exc_repo not in result
+
+        # search terminated by non-include git repo
+        mid_git = os.path.join(base_dir, "mid", ".git")
+        os.makedirs(mid_git, exist_ok=True)
+        assert gg.get_dirs_with_depth(base_dir) == []
     finally:
-        shutil.rmtree(repo)
+        shutil.rmtree(base_dir)
 
 
 def test_check_git_status(gg: GitGarden, dir: str) -> None:
@@ -136,17 +160,14 @@ def test_check_git_status(gg: GitGarden, dir: str) -> None:
     :param gg: GitGarden instance.
     :param dir: Path to the git-garden directory.
     """
-    # "touch" a file to dirty the working tree
-    tmp_file = "test.tmp"
-    with open(tmp_file, "w") as f:
-        f.write("")
+    touch("test.tmp")
 
     # attest the working tree state & clean up test file
     status = gg.check_git_status(dir=dir)
     try:
         assert status is True
     finally:
-        os.remove(tmp_file)
+        os.remove("test.tmp")
 
 
 def test_branch_crud(gg: GitGarden, dir: str) -> None:
@@ -180,6 +201,9 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
     assert branch not in gg.list_local_branches(dir=dir)
     assert branch not in gg.list_remote_branches(dir=dir)
 
+    # test error handling
+    with pytest.raises(ValueError):
+        gg.delete_branch(branch, branch_type="foobar", dir=dir)
 
 def test_list_branches(gg: GitGarden, dir: str) -> None:
     """
@@ -217,6 +241,7 @@ def test_find_root_branch(gg: GitGarden, dir: str) -> None:
         gg.find_root_branch(gg.list_local_branches(dir), gg.list_remote_branches(dir))
         == "main"
     )
+    assert gg.find_root_branch([], []) == ""
 
 
 def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
@@ -234,9 +259,43 @@ def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
     finally:
         # fetch remote (restoring the tracking branches)
         gg.fetch(dir, prune=False)
+        gg.fetch(dir, prune=True)
 
     assert "main" in gg.list_local_branches(dir=dir)
     assert "origin/main" in gg.list_remote_branches(dir=dir)
+
+
+def test_switch_branch(gg: GitGarden, dir: str) -> None:
+    """
+    Test branch switching.
+
+    :param gg: GitGarden instance.
+    :param dir: Path to the git-garden directory.
+    """
+    # skip tests that require branch switching if working tree is dirty
+    if gg.check_git_status():
+        pytest.skip(
+            "test_branch_ahead: Test cannot be run while working tree is dirty."
+        )
+    
+    # test success case
+    test_branch = "gitgarden-test-branch"
+    original_branch = gg.find_current_branch(dir=dir)
+    gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
+
+    try:
+        gg.switch_branch(test_branch, dir=dir)
+        assert gg.find_current_branch(dir=dir) == test_branch
+    finally:
+        gg.switch_branch(original_branch, dir=dir)
+        gg.delete_branch(test_branch, dir=dir)
+
+    # test failure case
+    touch("test.tmp")
+    try:
+        assert gg.switch_branch("foobar") == None
+    finally:
+        os.remove("test.tmp")
 
 
 def test_branch_ahead(gg: GitGarden, dir: str) -> None:
@@ -306,10 +365,7 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
                 assert "[behind" in branch
 
         # attest the test branch is up to date
-        gg.switch_branch(original_branch, dir=dir)
-        gg.fast_forward_branch(test_branch, root_branch, dir=dir)
-
-        # attest the test branch is behind
+        gg.fast_forward_branch(dir=dir)
         branches = gg.list_local_branches(dir=dir, upstream=True)
         for branch in branches:
             if branch.startswith(test_branch):
@@ -317,6 +373,7 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
 
     finally:
         # restore original branch & cleanup test branch
+        gg.switch_branch(original_branch, dir=dir)
         gg.delete_branch(test_branch, dir=dir)
         gg.delete_branch(test_branch, branch_type="remote", dir=dir)
         gg.delete_branch(test_branch, branch_type="tracking", dir=dir)
@@ -347,7 +404,7 @@ def test_branch_gone(gg: GitGarden, dir: str) -> None:
         gg.delete_branch(test_branch, dir=dir, branch_type="tracking")
 
 
-def test_branch_remote_only(gg: GitGarden, dir: str) -> None:
+def test_branch_remote_only(gg: GitGarden, dir: str, root_branch: str) -> None:
     """
     Test the "remote" status of a branch.
 
@@ -362,11 +419,14 @@ def test_branch_remote_only(gg: GitGarden, dir: str) -> None:
 
     # attest the test branch only exists on the remote
     try:
+        local_branches = gg.list_local_branches(dir)
+        remote_branches = gg.list_remote_branches(dir)
         assert gg.check_branch_remote_only(
             "origin/" + test_branch,
-            gg.list_local_branches(dir),
-            gg.list_remote_branches(dir),
+            local_branches,
+            remote_branches,
         )
+        assert not gg.check_branch_remote_only(root_branch, local_branches, remote_branches)
     finally:
         # cleanup test branches
         gg.delete_branch(test_branch, dir=dir, branch_type="remote")
