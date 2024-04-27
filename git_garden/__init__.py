@@ -200,7 +200,7 @@ class GitGarden:
         :raises: AttributeError
         """
         # TODO: "all" use case
-        
+
         # No check_call() as git returns non-zero for non-existent branches
         if branch_type == "remote":
             self.logger.debug(f"{self.pad}Deleting remote branch: {branch_name}")
@@ -505,9 +505,7 @@ class GitGarden:
                             f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
                         )
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
-                        ff_result = self.fast_forward_branch(
-                            current_branch, root_branch
-                        )
+                        ff_result = self.fast_forward_branch(dir=dir)
 
                         if ff_result.returncode != 0:
                             self.logger.error(

@@ -48,7 +48,7 @@ python -m git_garden --help
 ruff format .
 ruff check . --fix
 
-# linting/type checking
+# linting/type checking (main project only)
 pydoclint .
 mypy -m git_garden
 

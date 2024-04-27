@@ -13,8 +13,6 @@ from typing import Generator
 def logger() -> Generator[logging.Logger, None, None]:
     """
     Setup the test logger.
-
-    :yield: Logger instance.
     """
     logger = logging.getLogger(os.path.basename(__file__))
     logger.setLevel(logging.DEBUG)
@@ -27,8 +25,6 @@ def logger() -> Generator[logging.Logger, None, None]:
 def args() -> Generator[Namespace, None, None]:
     """
     Mimic the creation of the argparse.Namespace object with defaults.
-
-    :yields: Namespace object with pre-defined defaults.
     """
     yield Namespace(
         directory=os.path.dirname(
@@ -51,10 +47,6 @@ def args() -> Generator[Namespace, None, None]:
 def gg(logger: logging.Logger, args: Namespace) -> Generator[GitGarden, None, None]:
     """
     Setup the default GitGarden instance the same way __main__.py does.
-
-    :param logger: Logger instance.
-    :param args: Namespace object with pre-defined defaults.
-    :yield: GitGarden instance.
     """
     yield GitGarden(logger, args)
 
@@ -63,9 +55,6 @@ def gg(logger: logging.Logger, args: Namespace) -> Generator[GitGarden, None, No
 def dir(gg: GitGarden) -> Generator[str, None, None]:
     """
     Path to the git-garden directory.
-
-    :param gg: GitGarden instance.
-    :yield: Path to the git-garden directory.
     """
     yield os.path.join(gg.args.directory, "git-garden")
 
@@ -74,17 +63,13 @@ def dir(gg: GitGarden) -> Generator[str, None, None]:
 def root_branch() -> Generator[str, None, None]:
     """
     Yield the root branch.
-
-    :yield: Name of the root branch for test project.
     """
     yield "main"
 
 
-def touch(tmp_file: str = "test.tmp"):
+def touch(tmp_file: str = "test.tmp") -> None:
     """
     "touch" a file to dirty the working tree.
-
-    :param tmp_file: The path of the file to touch.
     """
     with open(tmp_file, "w") as f:
         f.write("")
@@ -93,8 +78,6 @@ def touch(tmp_file: str = "test.tmp"):
 def test_parse_branches(gg: GitGarden) -> None:
     """
     Test "git branch" parsing.
-
-    :param gg: GitGarden instance.
     """
     unformatted_local = "* foobar\n  main\n".encode()
     formatted_local = "'foobar origin/foobar '\n'main origin/main '\n".encode()
@@ -117,8 +100,6 @@ def test_get_dirs_with_depth(logger: logging.Logger, args: Namespace, dir: str) 
     """
     Test the .git search algorithm.
     Create an empty repo and delete it afterwards.
-
-    :param gg: GitGarden instance.
     """
     # create GG instance with custom args
     gg = GitGarden(logger, args)
@@ -156,9 +137,6 @@ def test_check_git_status(gg: GitGarden, dir: str) -> None:
     """
     Inject a change into the working tree and check that the status is dirty.
     Revert the change before attesting the state.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     touch("test.tmp")
 
@@ -173,9 +151,6 @@ def test_check_git_status(gg: GitGarden, dir: str) -> None:
 def test_branch_crud(gg: GitGarden, dir: str) -> None:
     """
     Test the creation and deletion of a branch.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     # create local branch
     branch = "test-branch"
@@ -205,12 +180,10 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
     with pytest.raises(ValueError):
         gg.delete_branch(branch, branch_type="foobar", dir=dir)
 
+
 def test_list_branches(gg: GitGarden, dir: str) -> None:
     """
     Test the listing of branches.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     # create the test branch on local & remote
     branch = "'quote-branch'"
@@ -233,9 +206,6 @@ def test_list_branches(gg: GitGarden, dir: str) -> None:
 def test_find_root_branch(gg: GitGarden, dir: str) -> None:
     """
     Test identification of the root branch.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     assert (
         gg.find_root_branch(gg.list_local_branches(dir), gg.list_remote_branches(dir))
@@ -247,9 +217,6 @@ def test_find_root_branch(gg: GitGarden, dir: str) -> None:
 def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
     """
     Test purging of the remote tracking branches & fetching of the remote.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     # purge remote tracking branches
     gg.purge_tracking_branches(dir=dir)
@@ -268,16 +235,13 @@ def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
 def test_switch_branch(gg: GitGarden, dir: str) -> None:
     """
     Test branch switching.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     # skip tests that require branch switching if working tree is dirty
     if gg.check_git_status():
         pytest.skip(
             "test_branch_ahead: Test cannot be run while working tree is dirty."
         )
-    
+
     # test success case
     test_branch = "gitgarden-test-branch"
     original_branch = gg.find_current_branch(dir=dir)
@@ -293,7 +257,7 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
     # test failure case
     touch("test.tmp")
     try:
-        assert gg.switch_branch("foobar") == None
+        assert gg.switch_branch("foobar") is None
     finally:
         os.remove("test.tmp")
 
@@ -301,9 +265,6 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
 def test_branch_ahead(gg: GitGarden, dir: str) -> None:
     """
     Test the "ahead" status of a branch.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     # skip tests that require branch switching if working tree is dirty
     if gg.check_git_status():
@@ -336,9 +297,6 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
 def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None:
     """
     Test the "behind" status of a branch.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     # skip tests that require branch switching if working tree is dirty
     if gg.check_git_status():
@@ -382,9 +340,6 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
 def test_branch_gone(gg: GitGarden, dir: str) -> None:
     """
     Test the "gone" status of a branch.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     # create and orphan a test branch
     test_branch = "gitgarden-test-branch-gone"
@@ -407,9 +362,6 @@ def test_branch_gone(gg: GitGarden, dir: str) -> None:
 def test_branch_remote_only(gg: GitGarden, dir: str, root_branch: str) -> None:
     """
     Test the "remote" status of a branch.
-
-    :param gg: GitGarden instance.
-    :param dir: Path to the git-garden directory.
     """
     # create a test branch that only exists on the remote
     test_branch = "gitgarden-test-branch-remote-only"
@@ -426,7 +378,9 @@ def test_branch_remote_only(gg: GitGarden, dir: str, root_branch: str) -> None:
             local_branches,
             remote_branches,
         )
-        assert not gg.check_branch_remote_only(root_branch, local_branches, remote_branches)
+        assert not gg.check_branch_remote_only(
+            root_branch, local_branches, remote_branches
+        )
     finally:
         # cleanup test branches
         gg.delete_branch(test_branch, dir=dir, branch_type="remote")
