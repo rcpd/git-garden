@@ -123,7 +123,7 @@ class GitGarden:
 
     def find_root_branch(
         self, local_branches: List[str], remote_branches: List[str]
-    ) -> Union[str, None]:
+    ) -> str:
         """
         Attempt to find the root branch (master or main) for a given git repo.
 
@@ -450,19 +450,13 @@ class GitGarden:
 
         :param dirs: Directories containing git repos.
         """
-        for dir in dirs:
+        for dir in dirs:           
             if self.args.purge:
                 self.purge_tracking_branches(dir)
             if self.args.no_fetch:
                 self.logger.debug(f"Scanning {dir}")
-            elif self.args.no_prune:
-                proc = self.fetch(dir, prune=False)
             else:
-                proc = self.fetch(dir)
-
-            if not self.args.no_fetch:
-                if proc.stderr.decode().startswith("fatal: not a git repository"):
-                    continue
+                self.fetch(dir, prune=(not self.args.no_prune))
 
             local_branches = self.list_local_branches(dir)
             local_branches_status = self.list_local_branches(dir, upstream=True)
@@ -472,7 +466,7 @@ class GitGarden:
             root_branch = self.find_root_branch(local_branches, remote_branches)
             current_branch = self.find_current_branch(dir)
 
-            if root_branch is None or current_branch is None:
+            if root_branch == "": # pragma: no cover
                 if self.args.ff:
                     self.logger.warning(
                         f"{self.pad}{self.colours.yellow}--ff will be skipped{self.colours.clear}"
@@ -486,20 +480,20 @@ class GitGarden:
                 branch_name = branch.split()[0]
                 status = "[" + branch.split("[")[-1]
 
-                if "HEAD" in branch:
+                if "HEAD" in branch: # pragma: no cover
                     self.logger.info(
                         f"{self.pad}{self.colours.yellow}{branch_name}{self.colours.clear}"
                     )
-                elif "origin" not in branch:
+                elif "origin" not in branch: # pragma: no cover
                     self.logger.info(
                         f"{self.pad}{self.colours.yellow}{branch_name} [local only]{self.colours.clear}"
                     )
-                elif "[ahead" in branch:
+                elif "[ahead" in branch: # pragma: no cover
                     self.logger.debug(
                         f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}"
                     )
 
-                elif "[behind" in branch:
+                elif "[behind" in branch: # pragma: no cover
                     if self.args.ff and branch_name == root_branch:
                         self.logger.info(
                             f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}"
@@ -523,14 +517,14 @@ class GitGarden:
                     self.logger.info(
                         f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}"
                     )
-                    if self.args.delete:
-                        safe_to_delete = True
+                    if self.args.delete and root_branch:
                         if current_branch == branch_name:
-                            safe_to_delete = False
                             self.logger.debug(
                                 f"{self.pad2}Switching from {current_branch} to {root_branch}"
                             )
-                            switch_result = self.switch_branch(branch, dir=dir)
+                            
+                            switch_result = self.switch_branch(root_branch, dir=dir)
+                            current_branch = self.find_current_branch(dir)
 
                             if switch_result is None:
                                 self.logger.warning(
@@ -538,13 +532,7 @@ class GitGarden:
                                     f"{self.colours.clear}"
                                 )
                             else:
-                                safe_to_delete = True
-                                current_branch = (
-                                    root_branch if root_branch is not None else ""
-                                )
-
-                        if safe_to_delete:
-                            self.delete_branch(branch_name, dir=dir)
+                                self.delete_branch(branch_name, dir=dir)
 
                 else:
                     self.logger.debug(

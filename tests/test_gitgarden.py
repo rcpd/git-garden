@@ -24,7 +24,8 @@ def logger() -> Generator[logging.Logger, None, None]:
 @pytest.fixture(scope="session")
 def args() -> Generator[Namespace, None, None]:
     """
-    Mimic the creation of the argparse.Namespace object with defaults.
+    Mimic the creation of the argparse.Namespace object.
+    Note: these are a modified version of the defaults.
     """
     yield Namespace(
         directory=os.path.dirname(
@@ -33,7 +34,7 @@ def args() -> Generator[Namespace, None, None]:
         depth=3,
         quiet=True,
         no_fetch=True,
-        no_prune=True,
+        no_prune=False,
         include=["git-garden"],
         exclude=["foobar"],
         remote=True,
@@ -390,6 +391,18 @@ def test_branch_remote_only(gg: GitGarden, dir: str, root_branch: str) -> None:
 def test_git_garden_module() -> None:
     """
     Test module execution (dry run).
+
+    directory=".",
+    depth=3,
+    quiet=True,
+    no_fetch=True,
+    no_prune=False,
+    include=[],
+    exclude=[],
+    remote=False,
+    purge=False,
+    ff=False,
+    delete=False
     """
     # patch sys.argv with git-garden cli params for dry run
     original_argv = sys.argv
@@ -401,7 +414,6 @@ def test_git_garden_module() -> None:
             ".",
             "--quiet",
             "--no-fetch",
-            "--no-prune",
         ]
 
         # mimic -m execution
@@ -409,3 +421,44 @@ def test_git_garden_module() -> None:
     finally:
         # restore sys.argv
         sys.argv = original_argv
+
+
+def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> None:
+    """
+    Test main() execution.
+
+    directory=".",
+    depth=3,
+    quiet=False,
+    no_fetch=False,
+    no_prune=True,
+    include=[],
+    exclude=[],
+    remote=True,
+    purge=True,
+    ff=True,
+    delete=True
+    """
+    gg = GitGarden(logger, args)
+
+    # quiet=True,
+    # no_fetch=True,
+    # no_prune=False,
+    # include=["git-garden"],
+    # exclude=["foobar"],
+    # remote=True,
+    # purge=True,
+    # ff=True,
+    # delete=True,
+
+    # inverse the default/module run arguments for additional coverage
+    gg.args.quiet = False
+    gg.args.no_fetch = False
+    gg.args.no_prune = True
+    gg.args.include = []
+    gg.args.exclude = []
+    gg.args.remote = True
+    gg.args.purge = True,
+    gg.args.ff = True,
+    gg.args.delete = True
+    gg.main([dir])

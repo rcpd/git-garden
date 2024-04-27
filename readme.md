@@ -44,7 +44,7 @@ python -m git_garden --help
 ## Pre-PR Checks
 
 ```
-# Ruff (r/w)
+# Ruff (r/w, all files)
 ruff format .
 ruff check . --fix
 
@@ -52,17 +52,17 @@ ruff check . --fix
 pydoclint .
 mypy -m git_garden
 
-# Pytest
+# pytest
 pytest --cov git_garden --cov-report xml:cov.xml --cov-report term
 
 # full testing
 tox
 
-# Generate Documentation
+# generate documentation (main project only)
 sphinx-build -b html . docs
 docs\index.html
 
-# Compilation (pyd is imported / run as normal)
+# compilation (pyd is imported / run as normal)
 mypyc git_garden\__init__.py
 python ..\__main__.py --remote --ff --delete
 ```
