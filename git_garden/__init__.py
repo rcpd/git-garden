@@ -33,7 +33,7 @@ class GitGarden:
         if git is None:
             git = shutil.which("git")
         if git is None or not os.path.exists(git):
-            raise RuntimeError("Git installation not found") 
+            raise RuntimeError("Git installation not found")
 
         self.git = git
         self.args = args
@@ -184,8 +184,6 @@ class GitGarden:
         :return: Exit code from branch creation.
         :raises: AttributeError
         """
-        # TODO: "all" use case
-
         # No check_call() as git returns non-zero for non-existent branches
         if branch_type == "remote":
             self.logger.debug(f"{self.pad}Deleting remote branch: {branch_name}")
@@ -225,6 +223,11 @@ class GitGarden:
                     branch_name,
                 ]
             ).returncode
+        elif branch_type == "all":
+            returncode = self.delete_branch(branch_name, dir=dir, branch_type="local")
+            returncode += self.delete_branch(branch_name, dir=dir, branch_type="remote")
+            returncode += self.delete_branch(branch_name, dir=dir, branch_type="tracking")
+            return returncode
         else:
             raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
 

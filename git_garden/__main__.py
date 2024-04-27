@@ -4,10 +4,9 @@ import argparse
 import logging
 from git_garden import GitGarden, Colours
 
-if sys.version_info < (3, 10):
-    # omit from coverage (exercised in seperate tox runs)
-    from typing import Optional  # pragma: no cover
-    from typing_extensions import Literal  # pragma: no cover
+if sys.version_info < (3, 10):  # pragma: no cover # exercised in seperate tox runs
+    from typing import Optional
+    from typing_extensions import Literal
 else:
     from typing import Optional, Literal
 

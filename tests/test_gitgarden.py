@@ -165,9 +165,7 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
         assert f"origin/{branch}" in gg.list_remote_branches(dir=dir)
     finally:
         # cleanup test branches
-        gg.delete_branch(branch, dir=dir)
-        gg.delete_branch(branch, branch_type="remote", dir=dir)
-        gg.delete_branch(branch, branch_type="tracking", dir=dir)
+        gg.delete_branch(branch, branch_type="all", dir=dir)
 
     # attest branch deletion
     assert branch not in gg.list_local_branches(dir=dir)
@@ -277,9 +275,7 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
     finally:
         # restore original branch & cleanup test branch
         gg.switch_branch(original_branch, dir=dir)
-        gg.delete_branch(test_branch, dir=dir)
-        gg.delete_branch(test_branch, branch_type="remote", dir=dir)
-        gg.delete_branch(test_branch, branch_type="tracking", dir=dir)
+        gg.delete_branch(test_branch, branch_type="all", dir=dir)
 
 
 def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None:
@@ -316,9 +312,7 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
     finally:
         # restore original branch & cleanup test branch
         gg.switch_branch(original_branch, dir=dir)
-        gg.delete_branch(test_branch, dir=dir)
-        gg.delete_branch(test_branch, branch_type="remote", dir=dir)
-        gg.delete_branch(test_branch, branch_type="tracking", dir=dir)
+        gg.delete_branch(test_branch, branch_type="all", dir=dir)
 
 
 def test_branch_gone(gg: GitGarden, dir: str) -> None:
@@ -421,16 +415,6 @@ def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> N
     delete=True
     """
     gg = GitGarden(logger, args)
-
-    # quiet=True,
-    # no_fetch=True,
-    # no_prune=False,
-    # include=["git-garden"],
-    # exclude=["foobar"],
-    # remote=True,
-    # purge=True,
-    # ff=True,
-    # delete=True,
 
     # inverse the default/module run arguments for additional coverage
     gg.args.quiet = False
