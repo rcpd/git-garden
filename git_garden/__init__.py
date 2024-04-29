@@ -518,7 +518,7 @@ class Colours:
     """
 
     def __init__(self) -> None:
-        self.yellow = "\x1b[0;33;40m"
-        self.red = "\x1b[0;31;40m"
-        self.green = "\x1b[0;32;40m"
+        self.yellow = "\x1b[33m"
+        self.red = "\x1b[31m"
+        self.green = "\x1b[32m"
         self.clear = "\x1b[0m"
