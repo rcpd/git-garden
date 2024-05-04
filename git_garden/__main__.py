@@ -54,7 +54,10 @@ class CustomFormatter(logging.Formatter):
 
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
-logger.addHandler(logging.StreamHandler())  # must be defined before file_handler to avoid formatting clash
+
+stream_handler = logging.StreamHandler() # must be defined before file_handler to avoid formatting clash
+stream_handler.setLevel(logging.INFO)
+logger.addHandler(stream_handler)  
 
 file_handler = logging.FileHandler(os.path.join(os.path.dirname(__file__), "garden.log"), mode="w")
 custom_fmtr = CustomFormatter(
@@ -82,11 +85,6 @@ if __name__ == "__main__":
         default=3,
         type=int,
         help="(Optional) Search depth for directories to process [Default: 3]",
-    )
-    parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="(Optional) Display local/gone branches only" " [Default: output all operations + branch status]",
     )
     parser.add_argument(
         "--no-fetch",

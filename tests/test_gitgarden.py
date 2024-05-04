@@ -30,7 +30,6 @@ def args() -> Generator[Namespace, None, None]:
     yield Namespace(
         directory=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         depth=3,
-        quiet=True,
         no_fetch=True,
         no_prune=False,
         include=["git-garden"],
@@ -369,7 +368,6 @@ def test_git_garden_module() -> None:
 
     directory=".",
     depth=3,
-    quiet=True,
     no_fetch=True,
     no_prune=False,
     include=[],
@@ -387,7 +385,6 @@ def test_git_garden_module() -> None:
             sys.argv[0],
             "--directory",
             ".",
-            "--quiet",
             "--no-fetch",
         ]
 
@@ -404,7 +401,6 @@ def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> N
 
     directory=".",
     depth=3,
-    quiet=False,
     no_fetch=False,
     no_prune=True,
     include=[],
@@ -417,7 +413,6 @@ def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> N
     gg = GitGarden(logger, args)
 
     # inverse the default/module run arguments for additional coverage
-    gg.args.quiet = False
     gg.args.no_fetch = False
     gg.args.no_prune = True
     gg.args.include = []

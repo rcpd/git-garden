@@ -41,16 +41,6 @@ class GitGarden:
         self.pad = _pad = "   "
         self.pad2 = _pad * 2
 
-        dir = "<dir>" # FIXME: dir is no longer in scope
-        if self.args.quiet:
-            self.pad = f"{_pad}{dir}: " 
-            self.pad2 = f"{_pad}{_pad}{dir}: "
-
-        if self.args.quiet:
-            for handler in self.logger.handlers:
-                if type(handler) is logging.StreamHandler:
-                    handler.setLevel(logging.INFO)
-
         self.colours = Colours()
 
     def get_dirs_with_depth(self, dir: str, depth: int = 3) -> List[str]:
@@ -220,7 +210,7 @@ class GitGarden:
         """
         # No check_call() as git returns non-zero for non-existent branches
         if branch_type == "remote":
-            self.logger.debug(f"{self.pad}Deleting remote branch: {branch_name}")
+            self.logger.info(f"{self.pad}Deleting remote branch: {branch_name}")
             return self.run_and_log(
                 [
                     self.git,
@@ -235,7 +225,7 @@ class GitGarden:
                 check=False
             )
         elif branch_type == "tracking":
-            self.logger.debug(f"{self.pad}Deleting remote tracking branch: {branch_name}")
+            self.logger.info(f"{self.pad}Deleting remote tracking branch: {branch_name}")
             return self.run_and_log(
                 [
                     self.git,
@@ -359,14 +349,14 @@ class GitGarden:
         """
         # not checking return code as subprocess errors are expected for non-repo folders
         if prune:
-            self.logger.debug(f"Fetching & pruning {dir}")
+            self.logger.info(f"Fetching & pruning {dir}")
             self.run_and_log(
                 [self.git, "-C", dir, "fetch", "--prune"],
                 check=False,
                 capture=False
             )
         else:
-            self.logger.debug(f"Fetching {dir}")
+            self.logger.info(f"Fetching {dir}")
             self.run_and_log([self.git, "-C", dir, "fetch"],
                              check=False, capture=False)
 
@@ -479,7 +469,7 @@ class GitGarden:
             if self.args.purge:
                 self.purge_tracking_branches(dir)
             if self.args.no_fetch:
-                self.logger.debug(f"Scanning {dir}")
+                self.logger.info(f"Scanning {dir}")
             else:
                 self.fetch(dir, prune=(not self.args.no_prune))
 
@@ -506,7 +496,7 @@ class GitGarden:
                 elif "origin" not in branch:  # pragma: no cover # logs only
                     self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} [local only]{self.colours.clear}")
                 elif "[ahead" in branch:  # pragma: no cover # logs only
-                    self.logger.debug(f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}")
+                    self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}")
 
                 elif "[behind" in branch:  # pragma: no cover # ff tested seperately
                     if self.args.ff and branch_name == root_branch:
@@ -517,13 +507,13 @@ class GitGarden:
                                 f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}, check debug logs for details.{self.colours.clear}"
                             )
                     else:
-                        self.logger.debug(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
+                        self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
 
                 elif "[gone]" in branch:  # pragma: no cover # funcs tested seperately
                     self.logger.info(f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}")
                     if self.args.delete and root_branch:
                         if current_branch == branch_name:
-                            self.logger.debug(f"{self.pad2}Switching from {current_branch} to {root_branch}")
+                            self.logger.info(f"{self.pad2}Switching from {current_branch} to {root_branch}")
 
                             switch_result = self.switch_branch(root_branch, dir=dir)
                             current_branch = self.find_current_branch(dir)
@@ -538,7 +528,7 @@ class GitGarden:
                         self.delete_branch(branch_name, dir=dir)
 
                 else:  # pragma: no cover # logs only
-                    self.logger.debug(f"{self.pad}{self.colours.green}{branch_name} [up to date]{self.colours.clear}")
+                    self.logger.info(f"{self.pad}{self.colours.green}{branch_name} [up to date]{self.colours.clear}")
 
             if self.args.remote: # pragma: no cover, cannot repro / remote_only tested seperately
                 for remote_branch in remote_branches:
