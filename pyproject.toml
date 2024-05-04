@@ -1,7 +1,7 @@
 [project]
 name = "git-garden"
 dynamic = ["version"]
-requires-python = ">=3.8"
+requires-python = ">=3.7"
 
 [tool.pytest.ini_options]
 addopts = "-rs"

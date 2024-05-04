@@ -1,3 +1,5 @@
 venv*/
 .coverage
 cov.xml
+__pycache__
+*.log

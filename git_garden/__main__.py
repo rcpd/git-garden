@@ -4,7 +4,7 @@ import argparse
 import logging
 from git_garden import GitGarden, Colours
 
-if sys.version_info < (3, 10):  # pragma: no cover # exercised in seperate tox runs
+if sys.version_info < (3, 8):  # pragma: no cover # exercised in seperate tox runs
     from typing import Optional
     from typing_extensions import Literal
 else:

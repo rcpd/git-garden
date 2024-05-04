@@ -5,7 +5,7 @@ import shutil
 import argparse
 import sys
 
-if sys.version_info < (3, 10):  # pragma: no cover # exercised in seperate tox runs
+if sys.version_info < (3, 8):  # pragma: no cover # exercised in seperate tox runs
     from typing import List, Optional, Union
     from typing_extensions import Literal
 else:
