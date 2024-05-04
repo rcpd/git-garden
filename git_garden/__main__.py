@@ -55,9 +55,9 @@ class CustomFormatter(logging.Formatter):
 logger = logging.getLogger(os.path.basename(__file__))
 logger.setLevel(logging.DEBUG)
 
-stream_handler = logging.StreamHandler() # must be defined before file_handler to avoid formatting clash
+stream_handler = logging.StreamHandler()  # must be defined before file_handler to avoid formatting clash
 stream_handler.setLevel(logging.INFO)
-logger.addHandler(stream_handler)  
+logger.addHandler(stream_handler)
 
 file_handler = logging.FileHandler(os.path.join(os.path.dirname(__file__), "garden.log"), mode="w")
 custom_fmtr = CustomFormatter(
