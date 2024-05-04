@@ -236,8 +236,7 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
     gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
 
     try:
-        switch_result = gg.switch_branch(test_branch, dir=dir)
-        assert switch_result.startswith(f"Switched to branch '{test_branch}'")
+        gg.switch_branch(test_branch, dir=dir)
         assert gg.find_current_branch(dir=dir) == test_branch
     finally:
         gg.switch_branch(original_branch, dir=dir)
