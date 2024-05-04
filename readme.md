@@ -30,9 +30,6 @@ python -m git_garden --ff
 python -m git_garden --include MyProject --include MyOtherProject
 python -m git_garden --exclude MyProject --exclude MyOtherProject
 
-# skip reporting basic current/ahead/behind status
-python -m git_garden --quiet
-
 # attempt to delete orphaned local branches
 # (branches with remote tracking where remote no longer exists)
 python -m git_garden --delete
@@ -51,6 +48,9 @@ ruff check . --fix
 # linting/type checking (main project only)
 pydoclint .
 mypy -m git_garden
+
+# functional testing
+python -m git_garden --remote --ff --delete
 
 # pytest
 pytest --cov git_garden --cov-report xml:cov.xml --cov-report term
