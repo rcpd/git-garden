@@ -536,7 +536,7 @@ class GitGarden:
                         continue
                     if self.check_branch_remote_only(remote_branch, local_branches, remote_branches):
                         self.logger.info(
-                            f"{self.pad}{self.colours.yellow}{branch.split('origin/')[-1]} [remote only]"
+                            f"{self.pad}{self.colours.yellow}{remote_branch.split('origin/')[-1]} [remote only]"
                             f"{self.colours.clear}"
                         )
 
