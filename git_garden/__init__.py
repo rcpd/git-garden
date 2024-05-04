@@ -6,10 +6,10 @@ import argparse
 import sys
 
 if sys.version_info < (3, 8):  # pragma: no cover # exercised in seperate tox runs
-    from typing import List, Optional, Union
+    from typing import List, Optional, Union, cast
     from typing_extensions import Literal
 else:
-    from typing import List, Optional, Union, Literal
+    from typing import List, Optional, Union, Literal, cast
 
 
 class GitGarden:
@@ -129,7 +129,7 @@ class GitGarden:
         :return: Current branch name.
         """
         local_branches_raw = self.run_and_log([self.git, "-C", dir, "branch", "--show-current"])
-        return str(local_branches_raw).replace("\n", "")
+        return cast(str, local_branches_raw).replace("\n", "")
 
     def find_root_branch(self, local_branches: List[str], remote_branches: List[str]) -> str:
         """
@@ -184,7 +184,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Exit code from branch creation.
         """
-        return int(self.run_and_log([self.git, "-C", dir, "branch", branch_name, root_branch], capture=False))
+        return cast(int, self.run_and_log([self.git, "-C", dir, "branch", branch_name, root_branch], capture=False))
 
     def delete_branch(
         self,
@@ -204,7 +204,8 @@ class GitGarden:
         # No check_call() as git returns non-zero for non-existent branches
         if branch_type == "remote":
             self.logger.info(f"{self.pad}Deleting remote branch: {branch_name}")
-            return int(
+            return cast(
+                int,
                 self.run_and_log(
                     [
                         self.git,
@@ -217,11 +218,12 @@ class GitGarden:
                     ],
                     capture=False,
                     check=False,
-                )
+                ),
             )
         elif branch_type == "tracking":
             self.logger.info(f"{self.pad}Deleting remote tracking branch: {branch_name}")
-            return int(
+            return cast(
+                int,
                 self.run_and_log(
                     [
                         self.git,
@@ -234,11 +236,12 @@ class GitGarden:
                     ],
                     capture=False,
                     check=False,
-                )
+                ),
             )
         elif branch_type == "local":
             self.logger.info(f"{self.pad2}Deleting local branch {branch_name}")
-            return int(
+            return cast(
+                int,
                 self.run_and_log(
                     [
                         self.git,
@@ -250,7 +253,7 @@ class GitGarden:
                     ],
                     capture=False,
                     check=False,
-                )
+                ),
             )
         elif branch_type == "all":
             returncode = self.delete_branch(branch_name, dir=dir, branch_type="local")
@@ -270,7 +273,8 @@ class GitGarden:
         """
         if upstream:
             return self.parse_branches(
-                str(
+                cast(
+                    str,
                     self.run_and_log(
                         [
                             self.git,
@@ -284,12 +288,13 @@ class GitGarden:
                             "--format",
                             "'%(refname:short) %(upstream:short) %(upstream:track)'",
                         ]
-                    )
+                    ),
                 ),
                 upstream=upstream,
             )
         return self.parse_branches(
-            str(
+            cast(
+                str,
                 self.run_and_log(
                     [
                         self.git,
@@ -301,7 +306,7 @@ class GitGarden:
                         "-r",
                         "origin/*",
                     ]
-                )
+                ),
             )
         )
 
@@ -315,7 +320,8 @@ class GitGarden:
         """
         if upstream:
             return self.parse_branches(
-                str(
+                cast(
+                    str,
                     self.run_and_log(
                         [
                             self.git,
@@ -326,12 +332,12 @@ class GitGarden:
                             "--format",
                             "'%(refname:short) %(upstream:short) %(upstream:track)'",
                         ]
-                    )
+                    ),
                 ),
                 upstream=upstream,
             )
         else:
-            return self.parse_branches(str(self.run_and_log([self.git, "--no-pager", "-C", dir, "branch"])))
+            return self.parse_branches(cast(str, self.run_and_log([self.git, "--no-pager", "-C", dir, "branch"])))
 
     def purge_tracking_branches(self, dir: str = ".") -> None:
         """
@@ -369,7 +375,8 @@ class GitGarden:
         :return: Result from branch switch (stdout or None if skipped).
         """
         if not self.check_git_status():
-            return str(
+            return cast(
+                str,
                 self.run_and_log(
                     [
                         self.git,
@@ -378,7 +385,7 @@ class GitGarden:
                         "switch",
                         branch,
                     ]
-                )
+                ),
             )
         else:
             self.logger.warning(
@@ -437,7 +444,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Return code from fast-forward.
         """
-        return int(self.run_and_log([self.git, "-C", dir, "pull", "--ff-only"], check=False, capture=False))
+        return cast(int, self.run_and_log([self.git, "-C", dir, "pull", "--ff-only"], check=False, capture=False))
 
     def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]) -> bool:
         """
