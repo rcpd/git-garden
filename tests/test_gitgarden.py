@@ -78,10 +78,10 @@ def test_parse_branches(gg: GitGarden) -> None:
     """
     Test "git branch" parsing.
     """
-    unformatted_local = "* foobar\n  main\n".encode()
-    formatted_local = "'foobar origin/foobar '\n'main origin/main '\n".encode()
-    unformatted_remote = "  origin/foobar\n  origin/main\n".encode()
-    formatted_remote = "'origin/foobar  '\n'origin/main  '\n".encode()
+    unformatted_local = "* foobar\n  main\n"
+    formatted_local = "'foobar origin/foobar '\n'main origin/main '\n"
+    unformatted_remote = "  origin/foobar\n  origin/main\n"
+    formatted_remote = "'origin/foobar  '\n'origin/main  '\n"
 
     assert gg.parse_branches(unformatted_local) == ["foobar", "main"]
     assert gg.parse_branches(formatted_local, upstream=True) == [
@@ -236,7 +236,8 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
     gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
 
     try:
-        gg.switch_branch(test_branch, dir=dir)
+        switch_result = gg.switch_branch(test_branch, dir=dir)
+        assert switch_result.startswith(f"Switched to branch '{test_branch}'")
         assert gg.find_current_branch(dir=dir) == test_branch
     finally:
         gg.switch_branch(original_branch, dir=dir)

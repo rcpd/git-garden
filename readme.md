@@ -66,3 +66,6 @@ docs\index.html
 mypyc git_garden\__init__.py
 python ..\__main__.py --remote --ff --delete
 ```
+
+# FIXME
+master record duped / displayed as remote only w/ --remote ?
