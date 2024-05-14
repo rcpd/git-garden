@@ -1,7 +1,8 @@
 import sys
 from setuptools import setup, find_packages
 
-dev_base = [
+install_requires = []
+dev_dependencies = [
     "ruff",
     "sphinx",
     "sphinx-autodoc-typehints",
@@ -12,14 +13,10 @@ dev_base = [
 ]
 
 if sys.version_info >= (3, 8):
-    dev_dependencies = dev_base + ["pydoclint"]
-else:
-    dev_dependencies = dev_base
+    dev_dependencies.append("pydoclint")
 
 if sys.version_info < (3, 10):
-    install_requires = ["typing-extensions"]
-else:
-    install_requires = []
+    install_requires.append("typing-extensions")
 
 setup(
     name="git-garden",
