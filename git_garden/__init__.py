@@ -201,7 +201,14 @@ class GitGarden:
         :return: Exit code from branch creation.
         :raises: ValueError on unexpected branch_type.
         """
-        if branch_type == "remote":
+        if branch_type in ("local", "all"):
+            local_branches = self.list_local_branches()
+        if branch_type in ("remote", "tracking", "all"):
+            remote_branches = self.list_remote_branches()
+        if branch_type not in ("local", "remote", "tracking", "all"):
+            raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
+        
+        if branch_type == "remote" and branch_name in remote_branches:
             self.logger.info(f"{self.pad}Deleting remote branch: {branch_name}")
             return cast(
                 int,
@@ -218,7 +225,7 @@ class GitGarden:
                     capture=False,
                 ),
             )
-        elif branch_type == "tracking":
+        elif branch_type == "tracking" and branch_name in remote_branches:
             self.logger.info(f"{self.pad}Deleting remote tracking branch: {branch_name}")
             return cast(
                 int,
@@ -235,7 +242,7 @@ class GitGarden:
                     capture=False,
                 ),
             )
-        elif branch_type == "local":
+        elif branch_type == "local" and branch_name in local_branches:
             self.logger.info(f"{self.pad2}Deleting local branch {branch_name}")
             return cast(
                 int,
@@ -256,8 +263,8 @@ class GitGarden:
             returncode += self.delete_branch(branch_name, dir=dir, branch_type="remote")
             returncode += self.delete_branch(branch_name, dir=dir, branch_type="tracking")
             return returncode
-        else:
-            raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
+        
+        return 0 # emulate success if branch not found
 
     def list_remote_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
         """
