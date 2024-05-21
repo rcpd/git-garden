@@ -20,7 +20,7 @@ if sys.version_info < (3, 10):
 
 setup(
     name="git-garden",
-    version="0.3.3",
+    version="0.3.4",
     packages=find_packages(),
     install_requires=install_requires,
     extras_require={"dev": dev_dependencies},
