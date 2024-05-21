@@ -198,11 +198,17 @@ class GitGarden:
         :param branch_name: Branch to delete.
         :param dir: Current directory being processed.
         :param branch_type: Specify the branch type for deletion.
-        :return: Exit code from branch creation.
+        :return: Exit code from branch deletion, 0 if branch not found.
         :raises: ValueError on unexpected branch_type.
         """
-        # No check_call() as git returns non-zero for non-existent branches
-        if branch_type == "remote":
+        if branch_type in ("local", "all"):
+            local_branches = self.list_local_branches()
+        if branch_type in ("remote", "tracking", "all"):
+            remote_branches = self.list_remote_branches()
+        if branch_type not in ("local", "remote", "tracking", "all"):
+            raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
+
+        if branch_type == "remote" and "origin/" + branch_name in remote_branches:
             self.logger.info(f"{self.pad}Deleting remote branch: {branch_name}")
             return cast(
                 int,
@@ -217,10 +223,9 @@ class GitGarden:
                         branch_name,
                     ],
                     capture=False,
-                    check=False,
                 ),
             )
-        elif branch_type == "tracking":
+        elif branch_type == "tracking" and branch_name in remote_branches:
             self.logger.info(f"{self.pad}Deleting remote tracking branch: {branch_name}")
             return cast(
                 int,
@@ -235,10 +240,9 @@ class GitGarden:
                         branch_name,
                     ],
                     capture=False,
-                    check=False,
                 ),
             )
-        elif branch_type == "local":
+        elif branch_type == "local" and branch_name in local_branches:
             self.logger.info(f"{self.pad2}Deleting local branch {branch_name}")
             return cast(
                 int,
@@ -252,7 +256,6 @@ class GitGarden:
                         branch_name,
                     ],
                     capture=False,
-                    check=False,
                 ),
             )
         elif branch_type == "all":
@@ -260,8 +263,8 @@ class GitGarden:
             returncode += self.delete_branch(branch_name, dir=dir, branch_type="remote")
             returncode += self.delete_branch(branch_name, dir=dir, branch_type="tracking")
             return returncode
-        else:
-            raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
+
+        return 0  # emulate success if branch not found
 
     def list_remote_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
         """
@@ -358,13 +361,12 @@ class GitGarden:
         :param dir: Current directory being processed.
         :param prune: If set prune remote tracking branches, otherwise fetch only.
         """
-        # not checking return code as subprocess errors are expected for non-repo folders
         if prune:
             self.logger.info(f"Fetching & pruning {dir}")
-            self.run_and_log([self.git, "-C", dir, "fetch", "--prune"], check=False, capture=False)
+            self.run_and_log([self.git, "-C", dir, "fetch", "--prune"], capture=False)
         else:
             self.logger.info(f"Fetching {dir}")
-            self.run_and_log([self.git, "-C", dir, "fetch"], check=False, capture=False)
+            self.run_and_log([self.git, "-C", dir, "fetch"], capture=False)
 
     def switch_branch(self, branch: str, dir: str = ".") -> Union[str, None]:
         """
@@ -444,6 +446,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Return code from fast-forward.
         """
+        # this is a rare exception where a failing git command will not be considered fatal
         return cast(int, self.run_and_log([self.git, "-C", dir, "pull", "--ff-only"], check=False, capture=False))
 
     def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]) -> bool:
