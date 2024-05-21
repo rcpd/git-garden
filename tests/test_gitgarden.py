@@ -138,7 +138,7 @@ def test_check_git_status(gg: GitGarden, dir: str) -> None:
     Revert the change before attesting the state.
     """
     tmp_file = "test.tmp"
-    touch(tmp_file) # can overwrite existing
+    touch(tmp_file)  # can overwrite existing
 
     try:
         # attest the working tree state & clean up test file

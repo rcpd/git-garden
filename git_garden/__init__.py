@@ -207,7 +207,7 @@ class GitGarden:
             remote_branches = self.list_remote_branches()
         if branch_type not in ("local", "remote", "tracking", "all"):
             raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
-        
+
         if branch_type == "remote" and "origin/" + branch_name in remote_branches:
             self.logger.info(f"{self.pad}Deleting remote branch: {branch_name}")
             return cast(
@@ -263,8 +263,8 @@ class GitGarden:
             returncode += self.delete_branch(branch_name, dir=dir, branch_type="remote")
             returncode += self.delete_branch(branch_name, dir=dir, branch_type="tracking")
             return returncode
-        
-        return 0 # emulate success if branch not found
+
+        return 0  # emulate success if branch not found
 
     def list_remote_branches(self, dir: str = ".", upstream: bool = False) -> List[str]:
         """
