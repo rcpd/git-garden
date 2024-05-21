@@ -198,7 +198,7 @@ class GitGarden:
         :param branch_name: Branch to delete.
         :param dir: Current directory being processed.
         :param branch_type: Specify the branch type for deletion.
-        :return: Exit code from branch creation.
+        :return: Exit code from branch deletion, 0 if branch not found.
         :raises: ValueError on unexpected branch_type.
         """
         if branch_type in ("local", "all"):
@@ -208,7 +208,7 @@ class GitGarden:
         if branch_type not in ("local", "remote", "tracking", "all"):
             raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
         
-        if branch_type == "remote" and branch_name in remote_branches:
+        if branch_type == "remote" and "origin/" + branch_name in remote_branches:
             self.logger.info(f"{self.pad}Deleting remote branch: {branch_name}")
             return cast(
                 int,
