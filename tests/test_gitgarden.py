@@ -128,7 +128,8 @@ def test_get_dirs_with_depth(logger: logging.Logger, args: Namespace, dir: str) 
         os.makedirs(mid_git, exist_ok=True)
         assert gg.get_dirs_with_depth(base_dir) == []
     finally:
-        shutil.rmtree(base_dir)
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
 
 
 def test_check_git_status(gg: GitGarden, dir: str) -> None:
@@ -136,14 +137,15 @@ def test_check_git_status(gg: GitGarden, dir: str) -> None:
     Inject a change into the working tree and check that the status is dirty.
     Revert the change before attesting the state.
     """
-    touch("test.tmp")
+    tmp_file = "test.tmp"
+    touch(tmp_file) # can overwrite existing
 
-    # attest the working tree state & clean up test file
-    status = gg.check_git_status(dir=dir)
     try:
-        assert status is True
+        # attest the working tree state & clean up test file
+        assert gg.check_git_status(dir=dir) is True
     finally:
-        os.remove("test.tmp")
+        if os.path.exists(tmp_file):
+            os.remove(tmp_file)
 
 
 def test_branch_crud(gg: GitGarden, dir: str) -> None:
@@ -180,7 +182,7 @@ def test_list_branches(gg: GitGarden, dir: str) -> None:
     Test the listing of branches.
     """
     # create the test branch on local & remote
-    branch = "'quote-branch'"
+    branch = "'gitgarden-test-quote-branch'"
     gg.create_branch(branch, dir=dir)
     gg.push_branch(branch)
 
@@ -242,11 +244,13 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
         gg.delete_branch(test_branch, dir=dir)
 
     # test failure case
-    touch("test.tmp")
+    tmp_file = "test.tmp"
+    touch(tmp_file)
     try:
         assert gg.switch_branch("foobar") is None
     finally:
-        os.remove("test.tmp")
+        if os.path.exists(tmp_file):
+            os.remove(tmp_file)
 
 
 def test_branch_ahead(gg: GitGarden, dir: str) -> None:
