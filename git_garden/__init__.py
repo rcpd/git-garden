@@ -201,7 +201,6 @@ class GitGarden:
         :return: Exit code from branch creation.
         :raises: ValueError on unexpected branch_type.
         """
-        # No check_call() as git returns non-zero for non-existent branches
         if branch_type == "remote":
             self.logger.info(f"{self.pad}Deleting remote branch: {branch_name}")
             return cast(
@@ -217,7 +216,6 @@ class GitGarden:
                         branch_name,
                     ],
                     capture=False,
-                    check=False,
                 ),
             )
         elif branch_type == "tracking":
@@ -235,7 +233,6 @@ class GitGarden:
                         branch_name,
                     ],
                     capture=False,
-                    check=False,
                 ),
             )
         elif branch_type == "local":
@@ -252,7 +249,6 @@ class GitGarden:
                         branch_name,
                     ],
                     capture=False,
-                    check=False,
                 ),
             )
         elif branch_type == "all":
@@ -358,13 +354,12 @@ class GitGarden:
         :param dir: Current directory being processed.
         :param prune: If set prune remote tracking branches, otherwise fetch only.
         """
-        # not checking return code as subprocess errors are expected for non-repo folders
         if prune:
             self.logger.info(f"Fetching & pruning {dir}")
-            self.run_and_log([self.git, "-C", dir, "fetch", "--prune"], check=False, capture=False)
+            self.run_and_log([self.git, "-C", dir, "fetch", "--prune"], capture=False)
         else:
             self.logger.info(f"Fetching {dir}")
-            self.run_and_log([self.git, "-C", dir, "fetch"], check=False, capture=False)
+            self.run_and_log([self.git, "-C", dir, "fetch"], capture=False)
 
     def switch_branch(self, branch: str, dir: str = ".") -> Union[str, None]:
         """
@@ -444,6 +439,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Return code from fast-forward.
         """
+        # this is a rare exception where a failing git command will not be considered fatal
         return cast(int, self.run_and_log([self.git, "-C", dir, "pull", "--ff-only"], check=False, capture=False))
 
     def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]) -> bool:
