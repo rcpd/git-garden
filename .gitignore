@@ -1,6 +1,8 @@
 venv*/
+.*_cache/
 .coverage
 cov.xml
 __pycache__
 *.log
 *.egg-info
+*.tox
