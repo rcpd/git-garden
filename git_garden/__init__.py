@@ -202,9 +202,9 @@ class GitGarden:
         :raises: ValueError on unexpected branch_type.
         """
         if branch_type in ("local", "all"):
-            local_branches = self.list_local_branches()
+            local_branches = self.list_local_branches(dir)
         if branch_type in ("remote", "tracking", "all"):
-            remote_branches = self.list_remote_branches()
+            remote_branches = self.list_remote_branches(dir)
         if branch_type not in ("local", "remote", "tracking", "all"):
             raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
 
@@ -352,7 +352,8 @@ class GitGarden:
 
         # trying to batch the delete without rate limiting will crash git on very large repos
         for branch in self.list_remote_branches(dir):
-            self.delete_branch(branch, dir=dir, branch_type="tracking")
+            if not branch.startswith("origin/HEAD"):
+                self.delete_branch(branch, dir=dir, branch_type="tracking")
 
     def fetch(self, dir: str = ".", prune: bool = True) -> None:
         """
@@ -376,7 +377,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Result from branch switch (stdout or None if skipped).
         """
-        if not self.check_git_status():
+        if not self.check_git_status(dir):
             return cast(
                 str,
                 self.run_and_log(
@@ -504,9 +505,9 @@ class GitGarden:
                     self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}")
 
                 elif "[behind" in branch:  # pragma: no cover # ff tested seperately
-                    if self.args.ff and branch_name == root_branch:
+                    if self.args.ff and current_branch == root_branch == branch_name:
                         self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
-                        self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
+                        self.logger.info(f"{self.pad2}Fast-forwarding {current_branch}")
                         if self.fast_forward_branch(dir=dir):
                             self.logger.error(
                                 f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}, "
