@@ -202,9 +202,9 @@ class GitGarden:
         :raises: ValueError on unexpected branch_type.
         """
         if branch_type in ("local", "all"):
-            local_branches = self.list_local_branches()
+            local_branches = self.list_local_branches(dir)
         if branch_type in ("remote", "tracking", "all"):
-            remote_branches = self.list_remote_branches()
+            remote_branches = self.list_remote_branches(dir)
         if branch_type not in ("local", "remote", "tracking", "all"):
             raise ValueError(f"Encountered unexpected branch_type: {branch_type}")
 
@@ -376,7 +376,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Result from branch switch (stdout or None if skipped).
         """
-        if not self.check_git_status():
+        if not self.check_git_status(dir):
             return cast(
                 str,
                 self.run_and_log(
@@ -504,7 +504,7 @@ class GitGarden:
                     self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}")
 
                 elif "[behind" in branch:  # pragma: no cover # ff tested seperately
-                    if self.args.ff and branch_name == root_branch:
+                    if self.args.ff and current_branch == root_branch:
                         self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
                         if self.fast_forward_branch(dir=dir):

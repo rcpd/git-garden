@@ -184,7 +184,7 @@ def test_list_branches(gg: GitGarden, dir: str) -> None:
     # create the test branch on local & remote
     branch = "'gitgarden-test-quote-branch'"
     gg.create_branch(branch, dir=dir)
-    gg.push_branch(branch)
+    gg.push_branch(branch, dir=dir)
 
     try:
         # attest the state of the branch in local & remote
@@ -228,7 +228,7 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
     Test branch switching.
     """
     # skip tests that require branch switching if working tree is dirty
-    if gg.check_git_status():
+    if gg.check_git_status(dir):
         pytest.skip("test_branch_ahead: Test cannot be run while working tree is dirty.")
 
     # test success case
@@ -247,7 +247,7 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
     tmp_file = "test.tmp"
     touch(tmp_file)
     try:
-        assert gg.switch_branch("foobar") is None
+        assert gg.switch_branch("foobar", dir) is None
     finally:
         if os.path.exists(tmp_file):
             os.remove(tmp_file)
@@ -258,7 +258,7 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
     Test the "ahead" status of a branch.
     """
     # skip tests that require branch switching if working tree is dirty
-    if gg.check_git_status():
+    if gg.check_git_status(dir):
         pytest.skip("test_branch_ahead: Test cannot be run while working tree is dirty.")
 
     # create a test branch in the "ahead" state
@@ -286,7 +286,7 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
     Test the "behind" status of a branch.
     """
     # skip tests that require branch switching if working tree is dirty
-    if gg.check_git_status():
+    if gg.check_git_status(dir):
         pytest.skip("test_branch_behind: Test cannot be run while working tree is dirty.")
 
     # create a test branch that is "behind" the remote

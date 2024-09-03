@@ -3,3 +3,4 @@ venv*/
 cov.xml
 __pycache__
 *.log
+*.egg-info
