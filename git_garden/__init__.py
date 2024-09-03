@@ -504,9 +504,10 @@ class GitGarden:
                     self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}")
 
                 elif "[behind" in branch:  # pragma: no cover # ff tested seperately
-                    if self.args.ff and current_branch == root_branch:
+                    if self.args.ff and current_branch == root_branch == branch_name:
                         self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
-                        self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
+                        self.logger.info(f"{self.pad}{self.colours.yellow}\t{current_branch} {root_branch}{self.colours.clear}")
+                        self.logger.info(f"{self.pad2}Fast-forwarding {current_branch}")
                         if self.fast_forward_branch(dir=dir):
                             self.logger.error(
                                 f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}, "
