@@ -199,7 +199,7 @@ class GitGarden:
         :param dir: Current directory being processed.
         :param branch_type: Specify the branch type for deletion.
         :return: Exit code from branch deletion, 0 if branch not found.
-        :raises: ValueError on unexpected branch_type.
+        :raises ValueError: on unexpected branch_type.
         """
         if branch_type in ("local", "all"):
             local_branches = self.list_local_branches(dir)
