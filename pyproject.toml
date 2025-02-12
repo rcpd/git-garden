@@ -30,6 +30,7 @@ lint.select = ["E4", "E7", "E9", "F", "ANN", "E501", "D101", "D102", "D103", "D1
 [tool.pydoclint]
 style = "sphinx"
 exclude = "venv|.tox|.git"
+skip-checking-short-docstrings = false
 
 # these are already enforced through ruff (pydocstyle)
 arg-type-hints-in-docstring = false
