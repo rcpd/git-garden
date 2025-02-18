@@ -147,7 +147,7 @@ if __name__ == "__main__":
         default=[],
         required=False,
         help="(Optional) A non-default branch name to treat as root instead of main/master"
-        " (--root can be passed multiples times)",
+        " (--root can be passed multiples times) [Default: main/master]",
     )
     args = parser.parse_args()
 
