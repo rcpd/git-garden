@@ -34,7 +34,8 @@ class GitGarden:
             git = shutil.which("git")
         if git is None or not os.path.exists(git):
             raise RuntimeError("Git installation not found")
-
+        if not args.root:
+            args.root = ["main", "master"]
         self.git = git
         self.args = args
         self.logger = logger
@@ -133,19 +134,18 @@ class GitGarden:
 
     def find_root_branch(self, local_branches: List[str], remote_branches: List[str]) -> str:
         """
-        Attempt to find the root branch (master or main) for a given git repo.
+        Attempt to find the root branch (main, master or --root) for a given git repo.
 
         :param local_branches: List of local branches.
         :param remote_branches: List of remote branches.
         :return: Root branch name.
         """
-        root_types = ["master", "main"]
         root_branch: str = ""
 
         # attempt to find root branch in local + remotes
         for branch in local_branches + remote_branches:
             if root_branch == "":
-                for root in root_types:
+                for root in self.args.root:
                     if branch.split()[0] in (root, f"origin/{root}"):
                         root_branch = root
                         break

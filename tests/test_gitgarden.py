@@ -205,6 +205,21 @@ def test_find_root_branch(gg: GitGarden, dir: str) -> None:
     assert gg.find_root_branch([], []) == ""
 
 
+def test_find_custom_root_branch(gg: GitGarden, dir: str) -> None:
+    """
+    Test identification of a custom (--root) root branch.
+    """
+    branch = "production"
+    gg.args.root = [branch]
+    gg.create_branch(branch, dir=dir)
+
+    try:
+        assert gg.find_root_branch(gg.list_local_branches(dir), []) == "production"
+    finally:
+        # cleanup the test branch
+        gg.delete_branch(branch, branch_type="all", dir=dir)
+
+
 def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
     """
     Test purging of the remote tracking branches & fetching of the remote.
@@ -412,7 +427,9 @@ def test_git_garden_module() -> None:
     remote=False,
     purge=False,
     ff=False,
+    ff_all=False
     delete=False
+    root=["main","master"]
     """
     # patch sys.argv with git-garden cli params for dry run
     original_argv = sys.argv
@@ -435,21 +452,13 @@ def test_git_garden_module() -> None:
 def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> None:
     """
     Test main() execution.
-
-    directory=".",
-    depth=3,
-    no_fetch=False,
-    no_prune=True,
-    include=[],
-    exclude=[],
-    remote=True,
-    purge=True,
-    ff=True,
-    delete=True
+    root="production"
     """
     gg = GitGarden(logger, args)
 
     # inverse the default/module run arguments for additional coverage
+    gg.args.directory=".",
+    gg.args.depth=3,
     gg.args.no_fetch = False
     gg.args.no_prune = True
     gg.args.include = []
@@ -457,7 +466,9 @@ def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> N
     gg.args.remote = True
     gg.args.purge = True
     gg.args.ff = True
+    gg.args.ff_all = True
     gg.args.delete = True
+    gg.args.root = ["production"]
     gg.main([dir])
 
     with pytest.raises(RuntimeError):
