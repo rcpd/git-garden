@@ -22,7 +22,7 @@ python -m pip install -r dev-requirements.txt
 # if --directory is not passed it will default to D:\dev (Windows) or ~ (Linux)
 python -m git_garden --directory D:\dev
 
-# attempt to fast-forward main/master if behind
+# attempt to fast-forward main/master (or --root) if behind
 python -m git_garden --ff
 
 # include or exclude directories matching a sub-string

@@ -205,6 +205,21 @@ def test_find_root_branch(gg: GitGarden, dir: str) -> None:
     assert gg.find_root_branch([], []) == ""
 
 
+def test_find_custom_root_branch(gg: GitGarden, dir: str) -> None:
+    """
+    Test identification of a custom (--root) root branch.
+    """
+    branch = "production"
+    gg.args.root = [branch]
+    gg.create_branch(branch, dir=dir)
+
+    try:
+        assert gg.find_root_branch(gg.list_local_branches(dir), []) == "production"
+    finally:
+        # cleanup the test branch
+        gg.delete_branch(branch, branch_type="all", dir=dir)
+
+
 def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
     """
     Test purging of the remote tracking branches & fetching of the remote.
@@ -281,7 +296,7 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
         gg.delete_branch(test_branch, branch_type="all", dir=dir)
 
 
-def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None:
+def test_branch_behind_and_ff(gg: GitGarden, dir: str) -> None:
     """
     Test the "behind" status of a branch.
     """
@@ -315,6 +330,39 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
     finally:
         # restore original branch & cleanup test branch
         gg.switch_branch(original_branch, dir=dir)
+        gg.delete_branch(test_branch, branch_type="all", dir=dir)
+
+
+def test_branch_behind_and_ff_all(gg: GitGarden, dir: str) -> None:
+    """
+    Test pulling a non-current branch.
+    """
+    # skip tests that require branch switching if working tree is dirty
+    if gg.check_git_status(dir):
+        pytest.skip("test_branch_behind: Test cannot be run while working tree is dirty.")
+
+    # create a test branch that is "behind" the remote
+    test_branch = "gitgarden-test-branch-behind-and-ff-all"
+    original_branch = gg.find_current_branch(dir=dir)
+    gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
+    gg.switch_branch(test_branch, dir=dir)
+    gg.create_commit("test commit", dir=dir)
+    gg.push_branch(test_branch, dir=dir, force=True)  # instantiate remote with +1 commit
+    gg.delete_commit(dir=dir)  # local branch is now behind
+
+    try:
+        # switch back to original branch and pull the test branch
+        gg.switch_branch(original_branch, dir=dir)
+        gg.pull_non_current_branch(test_branch, dir=dir)
+
+        # attest the test branch is up to date
+        branches = gg.list_local_branches(dir=dir, upstream=True)
+        for branch in branches:
+            if branch.startswith(test_branch):
+                assert "[behind" not in branch
+
+    finally:
+        # cleanup test branch
         gg.delete_branch(test_branch, branch_type="all", dir=dir)
 
 
@@ -379,7 +427,9 @@ def test_git_garden_module() -> None:
     remote=False,
     purge=False,
     ff=False,
+    ff_all=False
     delete=False
+    root=["main","master"]
     """
     # patch sys.argv with git-garden cli params for dry run
     original_argv = sys.argv
@@ -402,21 +452,12 @@ def test_git_garden_module() -> None:
 def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> None:
     """
     Test main() execution.
-
-    directory=".",
-    depth=3,
-    no_fetch=False,
-    no_prune=True,
-    include=[],
-    exclude=[],
-    remote=True,
-    purge=True,
-    ff=True,
-    delete=True
     """
     gg = GitGarden(logger, args)
 
     # inverse the default/module run arguments for additional coverage
+    gg.args.directory = (".",)
+    gg.args.depth = (3,)
     gg.args.no_fetch = False
     gg.args.no_prune = True
     gg.args.include = []
@@ -424,7 +465,9 @@ def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> N
     gg.args.remote = True
     gg.args.purge = True
     gg.args.ff = True
+    gg.args.ff_all = True
     gg.args.delete = True
+    gg.args.root = ["production"]
     gg.main([dir])
 
     with pytest.raises(RuntimeError):

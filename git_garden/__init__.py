@@ -32,15 +32,19 @@ class GitGarden:
     ) -> None:
         if git is None:
             git = shutil.which("git")
+
         if git is None or not os.path.exists(git):
             raise RuntimeError("Git installation not found")
+
+        # args will not exist in test init
+        if "root" not in args or not args.root:
+            args.root = ["main", "master"]
 
         self.git = git
         self.args = args
         self.logger = logger
         self.pad = _pad = "   "
         self.pad2 = _pad * 2
-
         self.colours = Colours()
 
     def get_dirs_with_depth(self, dir: str, depth: int = 3) -> List[str]:
@@ -133,19 +137,18 @@ class GitGarden:
 
     def find_root_branch(self, local_branches: List[str], remote_branches: List[str]) -> str:
         """
-        Attempt to find the root branch (master or main) for a given git repo.
+        Attempt to find the root branch (main, master or --root) for a given git repo.
 
         :param local_branches: List of local branches.
         :param remote_branches: List of remote branches.
         :return: Root branch name.
         """
-        root_types = ["master", "main"]
         root_branch: str = ""
 
         # attempt to find root branch in local + remotes
         for branch in local_branches + remote_branches:
             if root_branch == "":
-                for root in root_types:
+                for root in self.args.root:
                     if branch.split()[0] in (root, f"origin/{root}"):
                         root_branch = root
                         break
@@ -450,6 +453,15 @@ class GitGarden:
         # this is a rare exception where a failing git command will not be considered fatal
         return cast(int, self.run_and_log([self.git, "-C", dir, "pull", "--ff-only"], check=False, capture=False))
 
+    def pull_non_current_branch(self, branch: str, dir: str = ".") -> int:
+        """
+        :param branch: Branch to fetch.
+        :param dir: Current directory being processed.
+        :return: Return code from fetch.
+        """
+        # this is a rare exception where a failing git command will not be considered fatal
+        return cast(int, self.run_and_log([self.git, "-C", dir, "fetch", "origin", f"{branch}:{branch}"]))
+
     def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]) -> bool:
         """
         Check whether branch only exists on the remote.
@@ -505,16 +517,19 @@ class GitGarden:
                     self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}")
 
                 elif "[behind" in branch:  # pragma: no cover # ff tested seperately
-                    if self.args.ff and current_branch == root_branch == branch_name:
-                        self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
-                        self.logger.info(f"{self.pad2}Fast-forwarding {current_branch}")
-                        if self.fast_forward_branch(dir=dir):
+                    self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
+                    if self.args.ff or self.args.ff_all:
+                        self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
+                        if current_branch == root_branch == branch_name:
+                            error = self.fast_forward_branch(dir=dir)  # typical --ff-only pull
+                        elif self.args.ff_all:
+                            error = self.pull_non_current_branch(branch_name, dir=dir)  # fetch origin src:dest
+
+                        if error:
                             self.logger.error(
                                 f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}, "
                                 f"check debug logs for details.{self.colours.clear}"
                             )
-                    else:
-                        self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
 
                 elif "[gone]" in branch:  # pragma: no cover # funcs tested seperately
                     self.logger.info(f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}")

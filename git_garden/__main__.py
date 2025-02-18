@@ -89,12 +89,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--no-fetch",
         action="store_true",
-        help="(Optional) Skip fetching of remote tracking branches" " [Default: fetch branches]",
+        help="(Optional) Skip fetching of remote tracking branches [Default: fetch branches]",
     )
     parser.add_argument(
         "--no-prune",
         action="store_true",
-        help="(Optional) Skip pruning of remote tracking branches" " [Default: prune branches]",
+        help="(Optional) Skip pruning of remote tracking branches [Default: prune branches]",
     )
     parser.add_argument(
         "--include",
@@ -129,12 +129,25 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ff",
         action="store_true",
-        help="(Optional) Fast-forward master/main branch after fetch" " [Default: fetch only]",
+        help="(Optional) Fast-forward main/master branch after fetch [Default: fetch only]",
+    )
+    parser.add_argument(
+        "--ff-all",
+        action="store_true",
+        help="(Optional) Fast-forward all local branches [Default: fetch only]",
     )
     parser.add_argument(
         "--delete",
         action="store_true",
-        help="(Optional) Delete orphaned local branches" " [Default: report only]",
+        help="(Optional) Delete orphaned local branches [Default: report only]",
+    )
+    parser.add_argument(
+        "--root",
+        action="append",
+        default=[],
+        required=False,
+        help="(Optional) A non-default branch name to treat as root instead of main/master"
+        " (--root can be passed multiples times) [Default: main/master]",
     )
     args = parser.parse_args()
 
