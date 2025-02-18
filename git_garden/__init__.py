@@ -450,6 +450,13 @@ class GitGarden:
         # this is a rare exception where a failing git command will not be considered fatal
         return cast(int, self.run_and_log([self.git, "-C", dir, "pull", "--ff-only"], check=False, capture=False))
 
+    def pull_non_current_branch(self, branch: str, dir: str = ".") -> None:
+        """
+        Sync non-current local branch with origin
+        """
+        # this is a rare exception where a failing git command will not be considered fatal
+        return cast(int, self.run_and_log([self.git, "-C", dir, "fetch", "origin", f"{branch}:{branch}"]))
+
     def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]) -> bool:
         """
         Check whether branch only exists on the remote.
@@ -505,16 +512,19 @@ class GitGarden:
                     self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}]{self.colours.clear}")
 
                 elif "[behind" in branch:  # pragma: no cover # ff tested seperately
-                    if self.args.ff and current_branch == root_branch == branch_name:
-                        self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
-                        self.logger.info(f"{self.pad2}Fast-forwarding {current_branch}")
-                        if self.fast_forward_branch(dir=dir):
+                    self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
+                    if self.args.ff or self.args.ff_all:
+                        self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
+                        if current_branch == root_branch == branch_name:
+                            error = self.fast_forward_branch(dir=dir) # typical --ff-only pull
+                        elif self.args.ff_all:
+                            error = self.pull_non_current_branch(branch_name, dir=dir) # fetch origin src:dest
+                        
+                        if error:
                             self.logger.error(
                                 f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}, "
                                 f"check debug logs for details.{self.colours.clear}"
                             )
-                    else:
-                        self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
 
                 elif "[gone]" in branch:  # pragma: no cover # funcs tested seperately
                     self.logger.info(f"{self.pad}{self.colours.red}{branch_name} [remote deleted]{self.colours.clear}")
