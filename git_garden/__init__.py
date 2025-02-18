@@ -450,9 +450,11 @@ class GitGarden:
         # this is a rare exception where a failing git command will not be considered fatal
         return cast(int, self.run_and_log([self.git, "-C", dir, "pull", "--ff-only"], check=False, capture=False))
 
-    def pull_non_current_branch(self, branch: str, dir: str = ".") -> None:
+    def pull_non_current_branch(self, branch: str, dir: str = ".") -> int:
         """
-        Sync non-current local branch with origin
+        :param branch: Branch to fetch.
+        :param dir: Current directory being processed.
+        :return: Return code from fetch.
         """
         # this is a rare exception where a failing git command will not be considered fatal
         return cast(int, self.run_and_log([self.git, "-C", dir, "fetch", "origin", f"{branch}:{branch}"]))
@@ -516,10 +518,10 @@ class GitGarden:
                     if self.args.ff or self.args.ff_all:
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
                         if current_branch == root_branch == branch_name:
-                            error = self.fast_forward_branch(dir=dir) # typical --ff-only pull
+                            error = self.fast_forward_branch(dir=dir)  # typical --ff-only pull
                         elif self.args.ff_all:
-                            error = self.pull_non_current_branch(branch_name, dir=dir) # fetch origin src:dest
-                        
+                            error = self.pull_non_current_branch(branch_name, dir=dir)  # fetch origin src:dest
+
                         if error:
                             self.logger.error(
                                 f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}, "

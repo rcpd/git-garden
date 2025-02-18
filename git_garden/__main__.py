@@ -134,7 +134,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ff-all",
         action="store_true",
-        help="(Optional) Fast-forward all local branches [Default: master/main only]",
+        help="(Optional) Fast-forward all local branches [Default: fetch only]",
     )
     parser.add_argument(
         "--delete",

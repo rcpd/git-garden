@@ -281,7 +281,7 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
         gg.delete_branch(test_branch, branch_type="all", dir=dir)
 
 
-def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None:
+def test_branch_behind_and_ff(gg: GitGarden, dir: str) -> None:
     """
     Test the "behind" status of a branch.
     """
@@ -315,6 +315,39 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str, root_branch: str) -> None
     finally:
         # restore original branch & cleanup test branch
         gg.switch_branch(original_branch, dir=dir)
+        gg.delete_branch(test_branch, branch_type="all", dir=dir)
+
+
+def test_branch_behind_and_ff_all(gg: GitGarden, dir: str) -> None:
+    """
+    Test pulling a non-current branch.
+    """
+    # skip tests that require branch switching if working tree is dirty
+    if gg.check_git_status(dir):
+        pytest.skip("test_branch_behind: Test cannot be run while working tree is dirty.")
+
+    # create a test branch that is "behind" the remote
+    test_branch = "gitgarden-test-branch-behind-and-ff-all"
+    original_branch = gg.find_current_branch(dir=dir)
+    gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
+    gg.switch_branch(test_branch, dir=dir)
+    gg.create_commit("test commit", dir=dir)
+    gg.push_branch(test_branch, dir=dir, force=True)  # instantiate remote with +1 commit
+    gg.delete_commit(dir=dir)  # local branch is now behind
+
+    try:
+        # switch back to original branch and pull the test branch
+        gg.switch_branch(original_branch, dir=dir)
+        gg.pull_non_current_branch(test_branch, dir=dir)
+
+        # attest the test branch is up to date
+        branches = gg.list_local_branches(dir=dir, upstream=True)
+        for branch in branches:
+            if branch.startswith(test_branch):
+                assert "[behind" not in branch
+
+    finally:
+        # cleanup test branch
         gg.delete_branch(test_branch, branch_type="all", dir=dir)
 
 
