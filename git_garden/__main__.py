@@ -146,7 +146,9 @@ if __name__ == "__main__":
         action="append",
         default=[],
         required=False,
-        help="(Optional) A non-default branch name to treat as root instead of main/master (--root can be passed multiples times)")
+        help="(Optional) A non-default branch name to treat as root instead of main/master"
+        " (--root can be passed multiples times)",
+    )
     args = parser.parse_args()
 
     gg = GitGarden(logger, args)

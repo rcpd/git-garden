@@ -32,16 +32,19 @@ class GitGarden:
     ) -> None:
         if git is None:
             git = shutil.which("git")
+
         if git is None or not os.path.exists(git):
             raise RuntimeError("Git installation not found")
-        if not args.root:
+
+        # args will not exist in test init
+        if "root" not in args or not args.root:
             args.root = ["main", "master"]
+
         self.git = git
         self.args = args
         self.logger = logger
         self.pad = _pad = "   "
         self.pad2 = _pad * 2
-
         self.colours = Colours()
 
     def get_dirs_with_depth(self, dir: str, depth: int = 3) -> List[str]:

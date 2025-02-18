@@ -452,13 +452,12 @@ def test_git_garden_module() -> None:
 def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> None:
     """
     Test main() execution.
-    root="production"
     """
     gg = GitGarden(logger, args)
 
     # inverse the default/module run arguments for additional coverage
-    gg.args.directory=".",
-    gg.args.depth=3,
+    gg.args.directory = (".",)
+    gg.args.depth = (3,)
     gg.args.no_fetch = False
     gg.args.no_prune = True
     gg.args.include = []
