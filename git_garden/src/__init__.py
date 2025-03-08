@@ -3,13 +3,7 @@ import logging
 import subprocess
 import shutil
 import argparse
-import sys
-
-if sys.version_info < (3, 8):  # pragma: no cover # exercised in seperate tox runs
-    from typing import List, Optional, Union, cast
-    from typing_extensions import Literal
-else:
-    from typing import List, Optional, Union, Literal, cast
+from typing import List, Optional, Literal, cast
 
 
 class GitGarden:
@@ -98,7 +92,7 @@ class GitGarden:
         else:
             return branches
 
-    def run_and_log(self, proc_args: List[str], check: bool = True, capture: bool = True) -> Union[int, str]:
+    def run_and_log(self, proc_args: List[str], check: bool = True, capture: bool = True) -> int | str:
         """
         Call subprocess.run() and passthrough args & check, returning either the output or the return code.
         Defaults to same behaviour as subprocess.check_output() (raise on non-zero, return stdout)
@@ -372,7 +366,7 @@ class GitGarden:
             self.logger.info(f"Fetching {dir}")
             self.run_and_log([self.git, "-C", dir, "fetch"], capture=False)
 
-    def switch_branch(self, branch: str, dir: str = ".") -> Union[str, None]:
+    def switch_branch(self, branch: str, dir: str = ".") -> str | None:
         """
         Switch to a branch.
 

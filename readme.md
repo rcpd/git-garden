@@ -3,15 +3,15 @@
 ## Installation
 
 ```
-# typing-extensions only required on <= 3.9
-# otherwise no install required
-python -m pip install -r requirements.txt
+# installation is not required for normal use but can be done with
+python -m pip install .
 ```
 
 ## Develop Installation
 
 ```
-python -m pip install -r dev-requirements.txt
+python -m pip install -e . # pip
+uv sync --extra dev --frozen # uv (see [appendix.md](./appendix.md))
 ```
 
 ## Common Use Cases
@@ -40,23 +40,14 @@ python -m git_garden --help
 
 ## Pre-PR Checks
 
-```
-# Ruff (r/w, all files)
-ruff format .
-ruff check . --fix
-
-# linting/type checking (main project only)
-pydoclint .
-mypy -m git_garden
-
+```pwsh
 # functional testing
 python -m git_garden --remote --ff --delete
 
-# pytest
-pytest --cov git_garden --cov-report xml:cov.xml --cov-report term
-
-# full testing
-tox
+# run all the checks like the pipeline would (with whatever version of Python is installed on the pipeline image)
+# first run can be a little slow creating venv(s) or if dependencies have changed but they will be cached/reused after that
+tox -e pr # run the same checks as the pipeline
+tox -e fix # attempt to fix any violations (this will reformat your code!)
 
 # generate documentation (main project only)
 sphinx-build -b html . docs
