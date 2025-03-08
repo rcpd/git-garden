@@ -13,26 +13,25 @@ dev = [
     "pytest",
     "pytest-cov",
     "mypy",
-    "pydoclint",
-    "typing-extensions ; python_version < '3.10'"
+    "pydoclint"
 ]
 
 # editable installs are only invoked in uv when the build system is defined
 [build-system]
-requires = ["setuptools>=42"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.setuptools.packages.find]
 where = [
-    "git_garden/src",
+    "src",
 ]
 
 [tool.pytest.ini_options]
 addopts = "-rs" # short test summary, disable output capturing (i.e. allow stdout to stream to terminal)
-testpaths = ["git_garden/tests"]
+testpaths = ["tests"]
 
 [tool.mypy]
-mypy_path = "git_garden/src"
+mypy_path = "src"
 
 [tool.ruff]
 line-length = 120 # E501
