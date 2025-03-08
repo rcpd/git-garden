@@ -1,5 +1,4 @@
 import os
-import sys
 import argparse
 import logging
 from git_garden import GitGarden, Colours

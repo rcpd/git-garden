@@ -56,21 +56,21 @@ envlist = ["py3.10","py3.13"]
 
 [tool.tox.env_run_base]
 allowlist_externals = ["ruff", "pydoclint", "pytest", "mypy"]
-deps = ["-r dev-requirements.txt"]
+deps = ["ruff", "pydoclint", "pytest", "pytest-cov", "mypy"]
 
 # pr pipeline checks
 [tool.tox.env.pr]
 commands = [
-    ["ruff", "format", "./git_garden", "--check"],
-    ["ruff", "check", "./git_garden"],
-    ["pydoclint", "./git_garden"],
-    ["pytest", "--cov", "git_garden", "--cov-report", "xml:git_garden/tests/coverage.xml", "--cov-report", "term", "--junitxml", "git_garden/tests/test-results.xml"],
+    ["ruff", "format", ".", "--check"],
+    ["ruff", "check", "."],
+    ["pydoclint", "."],
+    ["pytest", "--cov", "git_garden", "--cov-report", "xml:tests/coverage.xml", "--cov-report", "term", "--junitxml", "tests/test-results.xml"],
     ["mypy", "-m", "git_garden"]
 ]
 
 # read/write fixes (dev inner loop)
 [tool.tox.env.fix]
 commands = [
-    ["ruff", "format", "./git_garden"],
-    ["ruff", "check", "./git_garden", "--fix"]
+    ["ruff", "format", "."],
+    ["ruff", "check", ".", "--fix"]
 ]
