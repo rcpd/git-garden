@@ -1,10 +1,12 @@
-name: Build
+name: CI
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * 0' # weekly CI build
 
 permissions:
   contents: write # required to write back to the repo during tests
