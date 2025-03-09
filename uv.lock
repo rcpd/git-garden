@@ -245,8 +245,11 @@ wheels = [
 
 [[package]]
 name = "git-garden"
-version = "1.0.0"
+version = "1.1.2"
 source = { editable = "." }
+dependencies = [
+    { name = "click" },
+]
 
 [package.optional-dependencies]
 dev = [
@@ -264,6 +267,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "pydoclint", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'" },
