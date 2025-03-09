@@ -48,3 +48,10 @@ jobs:
         
         # run tests
         tox -e pr
+    
+    # export results for coverage badge
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        files: tests/coverage.xml
+        format: python # pytest-cov

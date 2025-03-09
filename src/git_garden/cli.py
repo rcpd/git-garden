@@ -3,7 +3,7 @@ import click
 import argparse
 import logging
 from git_garden import GitGarden, Colours
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 
 
 class CustomFormatter(logging.Formatter):
@@ -63,10 +63,16 @@ custom_fmtr = CustomFormatter(
 file_handler.setFormatter(custom_fmtr)
 logger.addHandler(file_handler)
 
+
 # allow all cli args to pass through to argparse
 @click.command(context_settings=dict(ignore_unknown_options=True))
-@click.argument('args', nargs=-1, type=click.UNPROCESSED)
-def main(args):
+@click.argument("args", nargs=-1, type=click.UNPROCESSED)
+def main(args: List[str]) -> None:
+    """
+    Main entry point after click or module __main__ call.
+
+    param args: List of arguments from CLI to pass to argparse.
+    """
     parser = argparse.ArgumentParser(
         "Recursively scan (optionally fetching & pruning) all git repos and display"
         " their status compared to their remote tracking branches.\n",
