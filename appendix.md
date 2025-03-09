@@ -6,7 +6,7 @@ Miscellaneous information / project resources.
 
 ```
 python -m pip install -e . # pip, or;
-uv sync --extra dev --frozen # uv (see [appendix.md](./appendix.md))
+uv sync --extra dev --frozen # uv
 ```
 
 ## Pre-PR Checks
