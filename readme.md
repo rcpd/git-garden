@@ -8,24 +8,18 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v1.json)](https://github.com/astral-sh/ruff)
 [![mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
+A simple Python git wrapper to help manage multi-project maintenance with automated fetching, pruning, fast-forwarding, deleting orphans and more!
+
 ## Installation
 
 ```
-# installation is not required for normal use but can be done with
-python -m pip install .
-```
-
-## Develop Installation
-
-```
-python -m pip install -e . # pip
-uv sync --extra dev --frozen # uv (see [appendix.md](./appendix.md))
+pip install git-garden
 ```
 
 ## Common Use Cases
 
 ```
-# run with defaults: fetch & prune, report on local branches only
+# run with defaults: fetch & prune, report on local branches status only
 # --dir is the root of the directories being walked for git repos
 # if --dir is not passed it will default to the parent dir of project root
 python -m git_garden --dir D:\dev
