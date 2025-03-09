@@ -1,5 +1,11 @@
 # Git-Garden
 
+![Python](https://img.shields.io/badge/python-3.10-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![Python](https://img.shields.io/badge/python-3.12-blue.svg)
+![Python](https://img.shields.io/badge/python-3.13-blue.svg)
+![Pipeline](https://github.com/rcpd/git-garden/actions/workflows/pr-pipeline.yml/badge.svg)
+
 ## Installation
 
 ```
