@@ -2,6 +2,13 @@
 
 Miscellaneous information / project resources.
 
+## Develop Installation
+
+```
+python -m pip install -e . # pip, or;
+uv sync --extra dev --frozen # uv (see [appendix.md](./appendix.md))
+```
+
 ## Pre-PR Checks
 
 ```pwsh
