@@ -53,5 +53,5 @@ jobs:
     - name: Coveralls
       uses: coverallsapp/github-action@v2
       with:
-        files: tests/coverage.xml
-        format: python # pytest-cov
+        files: tests/cov.info
+        format: lcov

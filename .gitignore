@@ -2,6 +2,7 @@
 __pycache__/
 dist/
 docs/build/
+tests/cov.info
 venv*/
 tests/*.xml
 .coverage
