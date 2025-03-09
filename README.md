@@ -4,6 +4,7 @@
 ![Python](https://img.shields.io/pypi/pyversions/git-garden)
 ![Build](https://github.com/rcpd/git-garden/actions/workflows/pr-pipeline.yml/badge.svg?branch=main)
 [![Docs](https://readthedocs.org/projects/git-garden/badge)](https://git-garden.readthedocs.io/latest/)
+[![Coverage](https://coveralls.io/repos/github/c0ff33-dev/git-garden/badge.svg?branch=main)](https://coveralls.io/github/c0ff33-dev/git-garden?branch=main)
 
 A simple Python git wrapper to help manage multi-project maintenance with automated fetching, pruning, fast-forwarding, deleting orphans and more!
 
