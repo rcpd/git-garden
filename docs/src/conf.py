@@ -7,8 +7,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "Git-Garden"
-copyright = "2023, rcpd"
-author = "rcpd"
+copyright = "2025, c0ff33-dev"
+author = "c0ff33-dev"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

@@ -4,20 +4,15 @@
 name = "git-garden"
 description = "A simple Python git wrapper to help manage multi-project maintenance."
 readme = "README.md"
-version = "1.1.0"
+version = "1.1.1"
 requires-python = ">= 3.10"
 dependencies = ["click"]
-authors = [
-  {name = "c0ff33-dev"}
-]
+authors = [{name = "c0ff33-dev"}]
 keywords = ["git"]
+
 classifiers = [
   "Development Status :: 5 - Production/Stable",
-
-  # Indicate who your project is intended for
   "Intended Audience :: Developers",
-
-  # Specify the Python versions you support here.
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",

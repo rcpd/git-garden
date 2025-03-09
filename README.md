@@ -1,10 +1,10 @@
 # Git-Garden
 
-[![PyPI](https://img.shields.io/pypi/v/git-garden.svg)](https://pypi.org/project/git-garden/)
 ![Python](https://img.shields.io/pypi/pyversions/git-garden)
-![CI](https://github.com/rcpd/git-garden/actions/workflows/ci.yml/badge.svg?branch=main)
-[![Docs](https://readthedocs.org/projects/git-garden/badge)](https://git-garden.readthedocs.io/latest/)
-[![Coverage](https://coveralls.io/repos/github/c0ff33-dev/git-garden/badge.svg?branch=main)](https://coveralls.io/github/c0ff33-dev/git-garden?branch=main)
+[![PyPI](https://img.shields.io/pypi/v/git-garden.svg)](https://pypi.org/project/git-garden/)
+[![CI](https://img.shields.io/github/actions/workflow/status/c0ff33-dev/git-garden/ci.yml?branch=main)](https://github.com/c0ff33-dev/git-garden/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/readthedocs/git-garden)](https://git-garden.readthedocs.io/)
+[![Coverage](https://img.shields.io/coverallsCoverage/github/c0ff33-dev/git-garden?branch=main)](https://coveralls.io/github/c0ff33-dev/git-garden?branch=main)
 
 A simple Python git wrapper to help manage multi-project maintenance with automated fetching, pruning, fast-forwarding, deleting orphans and more!
 
