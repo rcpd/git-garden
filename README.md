@@ -1,12 +1,10 @@
 # Git-Garden
 
-![Python](https://img.shields.io/badge/python-3.10-blue.svg)
-![Python](https://img.shields.io/badge/python-3.11-blue.svg)
-![Python](https://img.shields.io/badge/python-3.12-blue.svg)
-![Python](https://img.shields.io/badge/python-3.13-blue.svg)
+[![PyPI](https://img.shields.io/pypi/v/git-garden.svg)](https://pypi.org/project/git-garden/)
+![Python](https://img.shields.io/pypi/pyversions/git-garden)
 ![Build](https://github.com/rcpd/git-garden/actions/workflows/pr-pipeline.yml/badge.svg?branch=main)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v1.json)](https://github.com/astral-sh/ruff)
-[![mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+[![Docs](https://readthedocs.org/projects/git-garden/badge)](https://git-garden.readthedocs.io/latest/)
+[![Coverage](https://coveralls.io/repos/github/c0ff33-dev/git-garden/badge.svg?branch=main)](https://coveralls.io/github/c0ff33-dev/git-garden?branch=main)
 
 A simple Python git wrapper to help manage multi-project maintenance with automated fetching, pruning, fast-forwarding, deleting orphans and more!
 
@@ -22,20 +20,20 @@ pip install git-garden
 # run with defaults: fetch & prune, report on local branches status only
 # --dir is the root of the directories being walked for git repos
 # if --dir is not passed it will default to the current working directory
-python -m git_garden --dir D:\dev
+git-garden --dir D:\dev
 
 # attempt to fast-forward main/master (or --root) if behind
-python -m git_garden --ff
+git-garden --ff
 
 # include or exclude directories matching a sub-string
 # i.e. for D:\dev\MyProject & D:\dev\MyOtherProject
-python -m git_garden --include MyProject --include MyOtherProject
-python -m git_garden --exclude MyProject --exclude MyOtherProject
+git-garden --include MyProject --include MyOtherProject
+git-garden --exclude MyProject --exclude MyOtherProject
 
 # attempt to delete orphaned local branches
 # (branches with remote tracking where remote no longer exists)
-python -m git_garden --delete
+git-garden --delete
 
 # see usage/syntax help
-python -m git_garden --help
+git-garden --help
 ```

@@ -1,8 +1,36 @@
+# https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
+
 [project]
 name = "git-garden"
-version = "1.0.1"
-requires-python = ">=3.10"
-dependencies = []
+description = "A simple Python git wrapper to help manage multi-project maintenance."
+readme = "README.md"
+version = "1.1.0"
+requires-python = ">= 3.10"
+dependencies = ["click"]
+authors = [
+  {name = "c0ff33-dev"}
+]
+keywords = ["git"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+
+  # Indicate who your project is intended for
+  "Intended Audience :: Developers",
+
+  # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/c0ff33-dev/git-garden"
+Documentation = "https://git-garden.readthedocs.io/latest/"
+Repository = "https://github.com/c0ff33-dev/git-garden.git"
+
+[project.scripts]
+git-garden = "git_garden.cli:cli_main"
 
 [project.optional-dependencies]
 dev = [
@@ -69,7 +97,7 @@ commands = [
     ["ruff", "format", ".", "--check"],
     ["ruff", "check", "."],
     ["pydoclint", "."],
-    ["pytest", "--cov", "git_garden", "--cov-report", "xml:tests/coverage.xml", "--cov-report", "term", "--junitxml", "tests/test-results.xml"],
+    ["pytest", "--cov", "git_garden", "--cov-report", "lcov:tests/cov.info", "--cov-report", "term", "--junitxml", "tests/test-results.xml"],
     ["mypy", "-m", "git_garden"]
 ]
 

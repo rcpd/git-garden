@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '0 0 * * 0' # weekly CI build
+    - cron: "0 0 * * 0" # weekly CI build
 
 permissions:
   contents: write # required to write back to the repo during tests
@@ -48,3 +48,10 @@ jobs:
         
         # run tests
         tox -e pr
+    
+    # export results for coverage badge
+    - name: Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        files: tests/cov.info
+        format: lcov
