@@ -28,7 +28,7 @@ def args() -> Generator[Namespace, None, None]:
     Note: these are a modified version of the defaults.
     """
     yield Namespace(
-        directory=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        dir=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         depth=3,
         no_fetch=True,
         no_prune=False,
@@ -54,7 +54,7 @@ def dir(gg: GitGarden) -> Generator[str, None, None]:
     """
     Path to the git-garden directory.
     """
-    yield os.path.join(gg.args.directory, "git-garden")
+    yield os.path.join(gg.args.dir, "git-garden")
 
 
 @pytest.fixture(scope="session")
@@ -418,7 +418,7 @@ def test_git_garden_module() -> None:
     """
     Test module execution (dry run).
 
-    directory=".",
+    dir=".",
     depth=3,
     no_fetch=True,
     no_prune=False,
@@ -437,7 +437,7 @@ def test_git_garden_module() -> None:
     try:
         sys.argv = [
             sys.argv[0],
-            "--directory",
+            "--dir",
             ".",
             "--no-fetch",
         ]
@@ -456,7 +456,7 @@ def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> N
     gg = GitGarden(logger, args)
 
     # inverse the default/module run arguments for additional coverage
-    gg.args.directory = (".",)
+    gg.args.dir = (".",)
     gg.args.depth = (3,)
     gg.args.no_fetch = False
     gg.args.no_prune = True

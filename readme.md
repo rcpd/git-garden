@@ -26,9 +26,9 @@ uv sync --extra dev --frozen # uv (see [appendix.md](./appendix.md))
 
 ```
 # run with defaults: fetch & prune, report on local branches only
-# --directory is the root of the directories being walked for git repos
-# if --directory is not passed it will default to D:\dev (Windows) or ~ (Linux)
-python -m git_garden --directory D:\dev
+# --dir is the root of the directories being walked for git repos
+# if --dir is not passed it will default to the parent dir of project root
+python -m git_garden --dir D:\dev
 
 # attempt to fast-forward main/master (or --root) if behind
 python -m git_garden --ff

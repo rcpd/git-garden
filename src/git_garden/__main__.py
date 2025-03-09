@@ -69,7 +69,7 @@ if __name__ == "__main__":
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--directory",
+        "--dir",
         default=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         type=str,
         help="(Optional) Name of the directory to process [Default: parent directory of project root]",
@@ -145,4 +145,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     gg = GitGarden(logger, args)
-    gg.main(gg.get_dirs_with_depth(gg.args.directory, gg.args.depth))
+    gg.main(gg.get_dirs_with_depth(gg.args.dir, gg.args.depth))
