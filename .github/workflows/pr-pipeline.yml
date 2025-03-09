@@ -25,6 +25,6 @@ jobs:
     - name: Run tox tests
       run: |
         # set git user (required for git commands in tests)
-        git config --global user.name "rcpd"
-        git config --global user.email "5835162+rcpd@users.noreply.github.com"
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         tox -e pr
