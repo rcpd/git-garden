@@ -24,4 +24,7 @@ jobs:
         python -m pip install tox
     - name: Run tox tests
       run: |
+        # set git user (required for git commands in tests)
+        git config --global user.name "rcpd"
+        git config --global user.email "5835162+rcpd@users.noreply.github.com"
         tox -e pr
