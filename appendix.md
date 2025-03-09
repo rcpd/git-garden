@@ -21,8 +21,8 @@ tox -e fix # attempt to fix any violations (this will reformat your code!)
 tox -e pr # run the same checks as the pipeline
 
 # generate documentation (main project only)
-sphinx-build -b html . docs
-docs\index.html
+sphinx-build -b html docs/src docs/build
+docs\build\index.html
 ```
 
 ## Installing uv

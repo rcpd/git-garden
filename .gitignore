@@ -1,5 +1,7 @@
 .*_cache/
 __pycache__/
+dist/
+docs/build/
 venv*/
 tests/*.xml
 .coverage
