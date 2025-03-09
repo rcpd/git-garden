@@ -4,7 +4,7 @@
 name = "git-garden"
 description = "A simple Python git wrapper to help manage multi-project maintenance."
 readme = "README.md"
-version = "1.0.1"
+version = "1.1.0"
 requires-python = ">= 3.10"
 dependencies = ["click"]
 authors = [

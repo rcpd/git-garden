@@ -73,6 +73,7 @@ def cli_main() -> None:
     """
     main()
 
+
 # preserve undecorated entry point for tests and module use
 def main() -> None:
     """
