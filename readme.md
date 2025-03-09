@@ -1,9 +1,12 @@
 # Git-Garden
 
-[![Python versions](https://img.shields.io/pypi/pyversions/genbadge.svg)](https://pypi.python.org/pypi/genbadge/)
+![Python](https://img.shields.io/badge/python-3.10-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![Python](https://img.shields.io/badge/python-3.12-blue.svg)
+![Python](https://img.shields.io/badge/python-3.13-blue.svg)
 ![Build](https://github.com/rcpd/git-garden/actions/workflows/pr-pipeline.yml/badge.svg)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v0.json)](https://github.com/astral-sh/ruff)
-[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v1.json)](https://github.com/astral-sh/ruff)
+[![mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 
 ## Installation
 
