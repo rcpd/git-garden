@@ -4,9 +4,8 @@ on:
   pull_request:
     branches: [ "main" ]
 
-
 permissions:
-  contents: write # required to contribute back to the repo during tests
+  contents: write # required to write back to the repo during tests
 
 jobs:
   build:
@@ -14,6 +13,7 @@ jobs:
 
     strategy:
       matrix:
+        # run the following versions in parallel jobs
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
