@@ -3,7 +3,7 @@ import click
 import argparse
 import logging
 from git_garden import GitGarden, Colours
-from typing import Optional, Literal, List
+from typing import Optional, Literal
 
 
 class CustomFormatter(logging.Formatter):
@@ -67,11 +67,17 @@ logger.addHandler(file_handler)
 # allow all cli args to pass through to argparse
 @click.command(context_settings=dict(ignore_unknown_options=True))
 @click.argument("args", nargs=-1, type=click.UNPROCESSED)
-def main(args: List[str]) -> None:
+def cli_main() -> None:
     """
-    Main entry point after click or module __main__ call.
+    Main entry point from click.
+    """
+    main()
 
-    param args: List of arguments from CLI to pass to argparse.
+# preserve undecorated entry point for tests and module use
+def main() -> None:
+    """
+    Main entry point after `click` or module `__main__` call.
+    `argparse` will extract cli args from `sys.argv`.
     """
     parser = argparse.ArgumentParser(
         "Recursively scan (optionally fetching & pruning) all git repos and display"

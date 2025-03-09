@@ -30,7 +30,7 @@ Documentation = "https://git-garden.readthedocs.io/latest/"
 Repository = "https://github.com/c0ff33-dev/git-garden.git"
 
 [project.scripts]
-git-garden = "git_garden.cli:main"
+git-garden = "git_garden.cli:cli_main"
 
 [project.optional-dependencies]
 dev = [
