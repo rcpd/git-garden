@@ -21,7 +21,7 @@ pip install git-garden
 ```
 # run with defaults: fetch & prune, report on local branches status only
 # --dir is the root of the directories being walked for git repos
-# if --dir is not passed it will default to the parent dir of project root
+# if --dir is not passed it will default to the current working directory
 python -m git_garden --dir D:\dev
 
 # attempt to fast-forward main/master (or --root) if behind

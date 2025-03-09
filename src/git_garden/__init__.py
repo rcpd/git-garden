@@ -518,6 +518,8 @@ class GitGarden:
                             error = self.fast_forward_branch(dir=dir)  # typical --ff-only pull
                         elif self.args.ff_all:
                             error = self.pull_non_current_branch(branch_name, dir=dir)  # fetch origin src:dest
+                        else:
+                            error = None
 
                         if error:
                             self.logger.error(

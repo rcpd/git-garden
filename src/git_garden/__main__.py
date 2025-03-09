@@ -70,9 +70,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dir",
-        default=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        default=os.getcwd(),
         type=str,
-        help="(Optional) Name of the directory to process [Default: parent directory of project root]",
+        help="(Optional) Name of the directory to process [Default: current working directory]",
     )
     parser.add_argument(
         "--depth",
