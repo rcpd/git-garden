@@ -33,6 +33,10 @@ jobs:
         # set git user (required for git commands in tests)
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        # tox -e pr
-        git branch
+        
+        # restore main but remain on current branch
+        git checkout main
+        git switch -
+
         git branch foo main # TODO: debug
+        # tox -e pr
