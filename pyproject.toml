@@ -21,6 +21,13 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.sdist]
+# limit tarball to src files
+include = [
+    "src/git_garden",
+    "/tests"
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/git_garden"]
 
