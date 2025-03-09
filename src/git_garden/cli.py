@@ -63,8 +63,10 @@ custom_fmtr = CustomFormatter(
 file_handler.setFormatter(custom_fmtr)
 logger.addHandler(file_handler)
 
-@click.command()
-def main():
+# allow all cli args to pass through to argparse
+@click.command(context_settings=dict(ignore_unknown_options=True))
+@click.argument('args', nargs=-1, type=click.UNPROCESSED)
+def main(args):
     parser = argparse.ArgumentParser(
         "Recursively scan (optionally fetching & pruning) all git repos and display"
         " their status compared to their remote tracking branches.\n",

@@ -13,7 +13,7 @@ uv sync --extra dev --frozen # uv
 
 ```pwsh
 # functional testing
-python -m git_garden --remote --ff --delete --dir ..
+git-garden --remote --ff --delete --dir ..
 
 # run all the checks like the pipeline would (with whatever version of Python is installed on the pipeline image)
 # first run can be a little slow creating venv(s) or if dependencies have changed but they will be cached/reused after that

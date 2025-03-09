@@ -5,7 +5,7 @@ requires-python = ">=3.10"
 dependencies = ["click"]
 
 [project.scripts]
-my-cli = "git_garden.cli:main"
+git-garden = "git_garden.cli:main"
 
 [project.optional-dependencies]
 dev = [

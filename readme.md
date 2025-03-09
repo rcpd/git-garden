@@ -22,20 +22,20 @@ pip install git-garden
 # run with defaults: fetch & prune, report on local branches status only
 # --dir is the root of the directories being walked for git repos
 # if --dir is not passed it will default to the current working directory
-python -m git_garden --dir D:\dev
+git-garden --dir D:\dev
 
 # attempt to fast-forward main/master (or --root) if behind
-python -m git_garden --ff
+git-garden --ff
 
 # include or exclude directories matching a sub-string
 # i.e. for D:\dev\MyProject & D:\dev\MyOtherProject
-python -m git_garden --include MyProject --include MyOtherProject
-python -m git_garden --exclude MyProject --exclude MyOtherProject
+git-garden --include MyProject --include MyOtherProject
+git-garden --exclude MyProject --exclude MyOtherProject
 
 # attempt to delete orphaned local branches
 # (branches with remote tracking where remote no longer exists)
-python -m git_garden --delete
+git-garden --delete
 
 # see usage/syntax help
-python -m git_garden --help
+git-garden --help
 ```
