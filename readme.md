@@ -1,26 +1,34 @@
 # Git-Garden
 
+![Python](https://img.shields.io/badge/python-3.10-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![Python](https://img.shields.io/badge/python-3.12-blue.svg)
+![Python](https://img.shields.io/badge/python-3.13-blue.svg)
+![Build](https://github.com/rcpd/git-garden/actions/workflows/pr-pipeline.yml/badge.svg?branch=main)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v1.json)](https://github.com/astral-sh/ruff)
+[![mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+
 ## Installation
 
 ```
-# typing-extensions only required on <= 3.9
-# otherwise no install required
-python -m pip install -r requirements.txt
+# installation is not required for normal use but can be done with
+python -m pip install .
 ```
 
 ## Develop Installation
 
 ```
-python -m pip install -r dev-requirements.txt
+python -m pip install -e . # pip
+uv sync --extra dev --frozen # uv (see [appendix.md](./appendix.md))
 ```
 
 ## Common Use Cases
 
 ```
 # run with defaults: fetch & prune, report on local branches only
-# --directory is the root of the directories being walked for git repos
-# if --directory is not passed it will default to D:\dev (Windows) or ~ (Linux)
-python -m git_garden --directory D:\dev
+# --dir is the root of the directories being walked for git repos
+# if --dir is not passed it will default to the parent dir of project root
+python -m git_garden --dir D:\dev
 
 # attempt to fast-forward main/master (or --root) if behind
 python -m git_garden --ff
@@ -36,33 +44,4 @@ python -m git_garden --delete
 
 # see usage/syntax help
 python -m git_garden --help
-```
-
-## Pre-PR Checks
-
-```
-# Ruff (r/w, all files)
-ruff format .
-ruff check . --fix
-
-# linting/type checking (main project only)
-pydoclint .
-mypy -m git_garden
-
-# functional testing
-python -m git_garden --remote --ff --delete
-
-# pytest
-pytest --cov git_garden --cov-report xml:cov.xml --cov-report term
-
-# full testing
-tox
-
-# generate documentation (main project only)
-sphinx-build -b html . docs
-docs\index.html
-
-# compilation (pyd is imported / run as normal)
-mypyc git_garden\__init__.py
-python ..\__main__.py --remote --ff --delete
 ```

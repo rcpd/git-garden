@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * 0' # weekly CI build
+
+permissions:
+  contents: write # required to write back to the repo during tests
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+      fail-fast: true # fail the whole matrix if one job fails
+      max-parallel: 1 # run jobs sequentially (or tests will conflict)
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }} # checkout source branch (not detached head)
+        fetch-depth: 0 # fetch all history (so non-current branches are available)
+
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install tox
+
+    - name: Run tox tests
+      run: |
+        # set git user (required for git authz in tests)
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        
+        # restore main but remain on current branch (assumed to exist in tests)
+        git checkout main
+        git switch -
+        
+        # run tests
+        tox -e pr

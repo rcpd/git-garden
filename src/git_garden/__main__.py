@@ -1,14 +1,8 @@
 import os
-import sys
 import argparse
 import logging
 from git_garden import GitGarden, Colours
-
-if sys.version_info < (3, 8):  # pragma: no cover # exercised in seperate tox runs
-    from typing import Optional
-    from typing_extensions import Literal
-else:
-    from typing import Optional, Literal
+from typing import Optional, Literal
 
 
 class CustomFormatter(logging.Formatter):
@@ -75,7 +69,7 @@ if __name__ == "__main__":
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--directory",
+        "--dir",
         default=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         type=str,
         help="(Optional) Name of the directory to process [Default: parent directory of project root]",
@@ -123,8 +117,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--purge",
         action="store_true",
-        help="(Optional) Delete ALL remote tracking branches"
-        " [Default: Only pruned if remote branch has been deleted]",
+        help="(Optional) Delete ALL remote tracking branches [Default: Only pruned if remote branch has been deleted]",
     )
     parser.add_argument(
         "--ff",
@@ -152,4 +145,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     gg = GitGarden(logger, args)
-    gg.main(gg.get_dirs_with_depth(gg.args.directory, gg.args.depth))
+    gg.main(gg.get_dirs_with_depth(gg.args.dir, gg.args.depth))

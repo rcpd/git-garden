@@ -1,7 +1,8 @@
 [project]
 name = "git-garden"
-version = "0.3.5"
-requires-python = ">=3.8"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = []
 
 [project.optional-dependencies]
 dev = [
@@ -12,12 +13,25 @@ dev = [
     "pytest",
     "pytest-cov",
     "mypy",
-    "pydoclint",
-    "typing-extensions ; python_version < '3.10'"
+    "pydoclint"
+]
+
+# editable installs are only invoked in uv when the build system is defined
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.setuptools.packages.find]
+where = [
+    "src",
 ]
 
 [tool.pytest.ini_options]
-addopts = "-rs"
+addopts = "-rs" # short test summary, disable output capturing (i.e. allow stdout to stream to terminal)
+testpaths = ["tests"]
+
+[tool.mypy]
+mypy_path = "src"
 
 [tool.ruff]
 line-length = 120 # E501
@@ -36,3 +50,27 @@ skip-checking-short-docstrings = false
 arg-type-hints-in-docstring = false
 check-return-types = false
 check-yield-types = false
+
+[tool.tox]
+envlist = ["py3.10", "py3.11", "py3.12", "py3.13"]
+
+[tool.tox.env_run_base]
+allowlist_externals = ["ruff", "pydoclint", "pytest", "mypy"]
+deps = ["ruff", "pydoclint", "pytest", "pytest-cov", "mypy"]
+
+# pr pipeline checks
+[tool.tox.env.pr]
+commands = [
+    ["ruff", "format", ".", "--check"],
+    ["ruff", "check", "."],
+    ["pydoclint", "."],
+    ["pytest", "--cov", "git_garden", "--cov-report", "xml:tests/coverage.xml", "--cov-report", "term", "--junitxml", "tests/test-results.xml"],
+    ["mypy", "-m", "git_garden"]
+]
+
+# read/write fixes (dev inner loop)
+[tool.tox.env.fix]
+commands = [
+    ["ruff", "format", "."],
+    ["ruff", "check", ".", "--fix"]
+]
