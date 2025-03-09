@@ -23,9 +23,9 @@ jobs:
           3.10
           3.13
 
-    - name: Install dependencies
-      run: |
-        python -m pip install tox
+    # - name: Install dependencies
+    #   run: |
+    #     python -m pip install tox
 
     - name: Run tox tests
       run: |
@@ -34,4 +34,5 @@ jobs:
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         # tox -e pr
         dir
+        git branch
         # git branch foo main # TODO: debug
