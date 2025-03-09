@@ -71,7 +71,7 @@ def cli_main() -> None:
     """
     Main entry point from click.
     """
-    main()
+    main() # pragma: no cover # no click entry point for tests
 
 
 # preserve undecorated entry point for tests and module use
