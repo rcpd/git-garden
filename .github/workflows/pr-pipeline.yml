@@ -37,6 +37,6 @@ jobs:
         # restore main but remain on current branch
         git checkout main
         git switch -
-
-        git branch foo main # TODO: debug
-        # tox -e pr
+        
+        # run tests
+        tox -e pr
