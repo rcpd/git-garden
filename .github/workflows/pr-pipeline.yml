@@ -4,8 +4,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+
 permissions:
-  contents: write
+  contents: write # required to contribute back to the repo during tests
 
 jobs:
   build:
@@ -15,7 +16,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         ref: ${{ github.head_ref }} # checkout source branch (not detached head)
-        fetch-depth: 0 # fetch all history
+        fetch-depth: 0 # fetch all history (so non-current branches are available)
 
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -32,11 +33,11 @@ jobs:
 
     - name: Run tox tests
       run: |
-        # set git user (required for git commands in tests)
+        # set git user (required for git authz in tests)
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         
-        # restore main but remain on current branch
+        # restore main but remain on current branch (assumed to exist in tests)
         git checkout main
         git switch -
         
