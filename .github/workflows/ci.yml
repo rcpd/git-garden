@@ -57,10 +57,10 @@ jobs:
   tag:
     runs-on: ubuntu-latest
     needs: build
-    
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
     steps:
     - name: create tag
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: |
         # fetch the latest tag from the repository
         LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
