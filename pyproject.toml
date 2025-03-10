@@ -3,8 +3,8 @@
 [project]
 name = "git-garden"
 description = "A simple Python git wrapper to help manage multi-project maintenance."
+dynamic = ["version"]
 readme = "README.md"
-version = "1.1.2"
 requires-python = ">= 3.10"
 dependencies = ["click"]
 authors = [{name = "c0ff33-dev"}]
@@ -41,8 +41,11 @@ dev = [
 
 # editable installs are only invoked in uv when the build system is defined
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.hatch.build.targets.sdist]
 # limit tarball to src files

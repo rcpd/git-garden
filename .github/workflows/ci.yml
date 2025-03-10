@@ -60,6 +60,12 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }} # checkout source branch (not detached head)
+        fetch-depth: 0 # fetch all history (so non-current branches are available)
+        fetch-tags: true
+
     - name: create tag
       run: |
         # fetch the latest tag from the repository
