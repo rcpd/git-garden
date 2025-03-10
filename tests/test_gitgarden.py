@@ -7,6 +7,7 @@ import shutil
 from git_garden import GitGarden
 from argparse import Namespace
 from typing import Generator
+import uuid
 
 
 @pytest.fixture(scope="session")
@@ -65,6 +66,14 @@ def root_branch() -> Generator[str, None, None]:
     yield "main"
 
 
+@pytest.fixture(scope="session")
+def guid(length: int = 8) -> Generator[str, None, None]:
+    """
+    Generate a short GUID of the specified length.
+    """
+    return str(uuid.uuid4()).replace("-", "")[:length]
+
+
 def touch(tmp_file: str = "test.tmp") -> None:
     """
     "touch" a file to dirty the working tree.
@@ -94,20 +103,22 @@ def test_parse_branches(gg: GitGarden) -> None:
     ]
 
 
-def test_get_dirs_with_depth(logger: logging.Logger, args: Namespace, dir: str) -> None:
+def test_get_dirs_with_depth(logger: logging.Logger, args: Namespace, dir: str, guid: str) -> None:
     """
     Test the .git search algorithm.
     Create an empty repo and delete it afterwards.
     """
     # create GG instance with custom args
     gg = GitGarden(logger, args)
-    gg.args.include = ["tmp_inc"]
-    gg.args.exclude = ["tmp_exc"]
+    tmp_inc = f"tmp_inc_{guid}"
+    tmp_exc = f"tmp_exc_{guid}"
+    gg.args.include = [tmp_inc]
+    gg.args.exclude = [tmp_exc]
 
     # create fake test repos
-    base_dir = os.path.join(dir, "tmp")
-    inc_repo = os.path.join(base_dir, "mid", "tmp_inc")
-    exc_repo = os.path.join(base_dir, "mid", "tmp_exc")
+    base_dir = os.path.join(dir, f"tmp_{guid}")
+    inc_repo = os.path.join(base_dir, "mid", tmp_inc)
+    exc_repo = os.path.join(base_dir, "mid", tmp_exc)
     inc_git = os.path.join(inc_repo, ".git")
     exc_git = os.path.join(exc_repo, ".git")
     os.makedirs(inc_git, exist_ok=True)
@@ -132,12 +143,14 @@ def test_get_dirs_with_depth(logger: logging.Logger, args: Namespace, dir: str) 
             shutil.rmtree(base_dir)
 
 
-def test_check_git_status(gg: GitGarden, dir: str) -> None:
+def test_check_git_status(gg: GitGarden, dir: str, guid: str) -> None:
     """
     Inject a change into the working tree and check that the status is dirty.
-    Revert the change before attesting the state.
+    Revert the change after attesting the state.
     """
-    tmp_file = "test.tmp"
+    base_dir = os.path.join(dir, f"tmp_{guid}")
+    os.makedirs(base_dir, exist_ok=True)
+    tmp_file = f"{guid}.tmp"
     touch(tmp_file)  # can overwrite existing
 
     try:
@@ -146,14 +159,16 @@ def test_check_git_status(gg: GitGarden, dir: str) -> None:
     finally:
         if os.path.exists(tmp_file):
             os.remove(tmp_file)
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
 
 
-def test_branch_crud(gg: GitGarden, dir: str) -> None:
+def test_branch_crud(gg: GitGarden, dir: str, guid: str) -> None:
     """
     Test the creation and deletion of a branch.
     """
     # create local branch
-    branch = "test-branch"
+    branch = f"test-branch-{guid}"
     gg.create_branch(branch, dir=dir)
 
     try:
@@ -172,17 +187,17 @@ def test_branch_crud(gg: GitGarden, dir: str) -> None:
     assert branch not in gg.list_local_branches(dir=dir)
     assert branch not in gg.list_remote_branches(dir=dir)
 
-    # test error handling
+    # test error handling of non-existent branch type
     with pytest.raises(ValueError):
         gg.delete_branch(branch, branch_type="foobar", dir=dir)
 
 
-def test_list_branches(gg: GitGarden, dir: str) -> None:
+def test_list_branches(gg: GitGarden, dir: str, guid: str) -> None:
     """
     Test the listing of branches.
     """
     # create the test branch on local & remote
-    branch = "'gitgarden-test-quote-branch'"
+    branch = f"'gitgarden-test-quote-branch-{guid}'"
     gg.create_branch(branch, dir=dir)
     gg.push_branch(branch, dir=dir)
 
@@ -205,16 +220,16 @@ def test_find_root_branch(gg: GitGarden, dir: str) -> None:
     assert gg.find_root_branch([], []) == ""
 
 
-def test_find_custom_root_branch(gg: GitGarden, dir: str) -> None:
+def test_find_custom_root_branch(gg: GitGarden, dir: str, guid: str) -> None:
     """
     Test identification of a custom (--root) root branch.
     """
-    branch = "production"
+    branch = f"production-{guid}"
     gg.args.root = [branch]
     gg.create_branch(branch, dir=dir)
 
     try:
-        assert gg.find_root_branch(gg.list_local_branches(dir), []) == "production"
+        assert gg.find_root_branch(gg.list_local_branches(dir), []) == branch
     finally:
         # cleanup the test branch
         gg.delete_branch(branch, branch_type="all", dir=dir)
@@ -238,7 +253,7 @@ def test_fetch_and_purge(gg: GitGarden, dir: str) -> None:
     assert "origin/main" in gg.list_remote_branches(dir=dir)
 
 
-def test_switch_branch(gg: GitGarden, dir: str) -> None:
+def test_switch_branch(gg: GitGarden, dir: str, guid: str) -> None:
     """
     Test branch switching.
     """
@@ -247,7 +262,7 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
         pytest.skip("test_branch_ahead: Test cannot be run while working tree is dirty.")
 
     # test success case
-    test_branch = "gitgarden-test-branch"
+    test_branch = f"gitgarden-test-branch-{guid}"
     original_branch = gg.find_current_branch(dir=dir)
     gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
 
@@ -259,7 +274,7 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
         gg.delete_branch(test_branch, dir=dir)
 
     # test failure case
-    tmp_file = "test.tmp"
+    tmp_file = f"{guid}.tmp"
     touch(tmp_file)
     try:
         assert gg.switch_branch("foobar", dir) is None
@@ -268,7 +283,7 @@ def test_switch_branch(gg: GitGarden, dir: str) -> None:
             os.remove(tmp_file)
 
 
-def test_branch_ahead(gg: GitGarden, dir: str) -> None:
+def test_branch_ahead(gg: GitGarden, dir: str, guid: str) -> None:
     """
     Test the "ahead" status of a branch.
     """
@@ -277,7 +292,7 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
         pytest.skip("test_branch_ahead: Test cannot be run while working tree is dirty.")
 
     # create a test branch in the "ahead" state
-    test_branch = "gitgarden-test-branch-ahead"
+    test_branch = f"gitgarden-test-branch-ahead-{guid}"
     original_branch = gg.find_current_branch(dir=dir)
     gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
     gg.push_branch(test_branch, dir=dir)  # instantiate remote
@@ -296,7 +311,7 @@ def test_branch_ahead(gg: GitGarden, dir: str) -> None:
         gg.delete_branch(test_branch, branch_type="all", dir=dir)
 
 
-def test_branch_behind_and_ff(gg: GitGarden, dir: str) -> None:
+def test_branch_behind_and_ff(gg: GitGarden, dir: str, guid: str) -> None:
     """
     Test the "behind" status of a branch.
     """
@@ -305,7 +320,7 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str) -> None:
         pytest.skip("test_branch_behind: Test cannot be run while working tree is dirty.")
 
     # create a test branch that is "behind" the remote
-    test_branch = "gitgarden-test-branch-behind-and-ff"
+    test_branch = f"gitgarden-test-branch-behind-and-ff-{guid}"
     original_branch = gg.find_current_branch(dir=dir)
     gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
     gg.switch_branch(test_branch, dir=dir)
@@ -333,7 +348,7 @@ def test_branch_behind_and_ff(gg: GitGarden, dir: str) -> None:
         gg.delete_branch(test_branch, branch_type="all", dir=dir)
 
 
-def test_branch_behind_and_ff_all(gg: GitGarden, dir: str) -> None:
+def test_branch_behind_and_ff_all(gg: GitGarden, dir: str, guid: str) -> None:
     """
     Test pulling a non-current branch.
     """
@@ -342,7 +357,7 @@ def test_branch_behind_and_ff_all(gg: GitGarden, dir: str) -> None:
         pytest.skip("test_branch_behind: Test cannot be run while working tree is dirty.")
 
     # create a test branch that is "behind" the remote
-    test_branch = "gitgarden-test-branch-behind-and-ff-all"
+    test_branch = f"gitgarden-test-branch-behind-and-ff-all-{guid}"
     original_branch = gg.find_current_branch(dir=dir)
     gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
     gg.switch_branch(test_branch, dir=dir)
@@ -366,12 +381,12 @@ def test_branch_behind_and_ff_all(gg: GitGarden, dir: str) -> None:
         gg.delete_branch(test_branch, branch_type="all", dir=dir)
 
 
-def test_branch_gone(gg: GitGarden, dir: str) -> None:
+def test_branch_gone(gg: GitGarden, dir: str, guid: str) -> None:
     """
     Test the "gone" status of a branch.
     """
     # create and orphan a test branch
-    test_branch = "gitgarden-test-branch-gone"
+    test_branch = f"gitgarden-test-branch-gone-{guid}"
     gg.create_branch(test_branch, dir=dir)
     gg.push_branch(test_branch, dir=dir)
     gg.delete_branch(test_branch, dir=dir, branch_type="remote")
@@ -388,12 +403,12 @@ def test_branch_gone(gg: GitGarden, dir: str) -> None:
         gg.delete_branch(test_branch, dir=dir, branch_type="tracking")
 
 
-def test_branch_remote_only(gg: GitGarden, dir: str, root_branch: str) -> None:
+def test_branch_remote_only(gg: GitGarden, dir: str, root_branch: str, guid: str) -> None:
     """
     Test the "remote" status of a branch.
     """
     # create a test branch that only exists on the remote
-    test_branch = "gitgarden-test-branch-remote-only"
+    test_branch = f"gitgarden-test-branch-remote-only-{guid}"
     gg.create_branch(test_branch, dir=dir)
     gg.push_branch(test_branch, dir=dir)
     gg.delete_branch(test_branch, dir=dir, branch_type="local")

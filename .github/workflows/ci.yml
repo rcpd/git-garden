@@ -18,8 +18,6 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-      fail-fast: true # fail the whole matrix if one job fails
-      max-parallel: 1 # run jobs sequentially (or tests will conflict)
 
     steps:
     - uses: actions/checkout@v4
