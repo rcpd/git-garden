@@ -4,10 +4,11 @@ import os
 import sys
 import runpy
 import shutil
+import subprocess
+import uuid
 from git_garden import GitGarden
 from argparse import Namespace
 from typing import Generator
-import uuid
 
 
 @pytest.fixture(scope="session")
@@ -466,7 +467,7 @@ def test_git_garden_module() -> None:
 
 def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> None:
     """
-    Test main() execution.
+    Test main() entry point.
     """
     gg = GitGarden(logger, args)
 
@@ -488,3 +489,10 @@ def test_git_garden_main(logger: logging.Logger, args: Namespace, dir: str) -> N
     with pytest.raises(RuntimeError):
         gg = GitGarden(logger, args, git="foobar")
         gg.main([dir])
+
+
+def test_git_garden_subprocess() -> None:
+    """
+    Test git_garden.exe entry point.
+    """
+    subprocess.run(["git-garden.exe"], check=True)
