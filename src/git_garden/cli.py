@@ -1,5 +1,4 @@
 import os
-import click
 import argparse
 import logging
 from git_garden import GitGarden, Colours
@@ -62,16 +61,6 @@ custom_fmtr = CustomFormatter(
 )
 file_handler.setFormatter(custom_fmtr)
 logger.addHandler(file_handler)
-
-
-# allow all cli args to pass through to argparse
-@click.command(context_settings=dict(ignore_unknown_options=True))
-@click.argument("args", nargs=-1, type=click.UNPROCESSED)
-def cli_main() -> None:
-    """
-    Main entry point from click.
-    """
-    main()  # pragma: no cover # no click entry point for tests
 
 
 # preserve undecorated entry point for tests and module use
