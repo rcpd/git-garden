@@ -495,4 +495,5 @@ def test_git_garden_subprocess() -> None:
     """
     Test git_garden.exe entry point.
     """
-    subprocess.run(["git-garden.exe"], check=True)
+    command = "git-garden.exe" if sys.platform == "win32" else "git-garden"
+    subprocess.run([command], check=True)
