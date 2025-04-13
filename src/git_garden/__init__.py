@@ -512,7 +512,7 @@ class GitGarden:
 
                 elif "[behind" in branch:  # pragma: no cover # ff tested seperately
                     self.logger.info(f"{self.pad}{self.colours.yellow}{branch_name} {status}{self.colours.clear}")
-                    if self.args.ff or self.args.ff_all:
+                    if (self.args.ff or self.args.ff_all) and root_branch:
                         self.logger.info(f"{self.pad2}Fast-forwarding {branch_name}")
                         if current_branch == root_branch == branch_name:
                             error = self.fast_forward_branch(dir=dir)  # typical --ff-only pull
