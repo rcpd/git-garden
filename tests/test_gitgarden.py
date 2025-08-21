@@ -367,7 +367,7 @@ def test_branch_behind_and_ff_all(gg: GitGarden, dir: str, guid: str) -> None:
     gg.create_commit("test commit", dir=dir)
     gg.push_branch(test_branch, dir=dir, force=True)  # instantiate remote with +1 commit
     gg.delete_commit(dir=dir)  # local branch is now behind
-    
+
     gg.create_branch(test_branch_2, root_branch=original_branch, dir=dir)
     gg.switch_branch(test_branch_2, dir=dir)
     gg.create_commit("test commit", dir=dir)

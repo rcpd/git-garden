@@ -456,9 +456,11 @@ class GitGarden:
         # moving HEAD may lead to data loss if there are uncommitted changes
         if not self.check_git_status(dir):
             # this is a rare exception where a failing git command will not be considered fatal
-            return cast(int, self.run_and_log([self.git, "-C", dir, "fetch", "--update-head-ok", "origin", 
-                                               f"{branch}:{branch}"]))
-        else:      
+            return cast(
+                int,
+                self.run_and_log([self.git, "-C", dir, "fetch", "--update-head-ok", "origin", f"{branch}:{branch}"]),
+            )
+        else:
             self.logger.warning(
                 f"{self.pad2}{self.colours.yellow}Pulling non-current branch is precluded by uncommitted changes on "
                 f"current branch{self.colours.clear}"
