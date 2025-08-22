@@ -535,7 +535,7 @@ class GitGarden:
                         if error:
                             self.logger.error(
                                 f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}, "
-                                f"check debug logs for details.{self.colours.clear}"
+                                f"check debug logs for details{self.colours.clear}"
                             )
 
                 elif "[gone]" in branch:  # pragma: no cover # funcs tested seperately
