@@ -359,19 +359,28 @@ def test_branch_behind_and_ff_all(gg: GitGarden, dir: str, guid: str) -> None:
 
     # create a test branch that is "behind" the remote
     test_branch = f"gitgarden-test-branch-behind-and-ff-all-{guid}"
+    test_branch_2 = f"{test_branch}-2"
     original_branch = gg.find_current_branch(dir=dir)
+
     gg.create_branch(test_branch, root_branch=original_branch, dir=dir)
     gg.switch_branch(test_branch, dir=dir)
     gg.create_commit("test commit", dir=dir)
     gg.push_branch(test_branch, dir=dir, force=True)  # instantiate remote with +1 commit
     gg.delete_commit(dir=dir)  # local branch is now behind
 
+    gg.create_branch(test_branch_2, root_branch=original_branch, dir=dir)
+    gg.switch_branch(test_branch_2, dir=dir)
+    gg.create_commit("test commit", dir=dir)
+    gg.push_branch(test_branch_2, dir=dir, force=True)  # instantiate remote with +1 commit
+    gg.delete_commit(dir=dir)  # local branch is now behind
+
     try:
         # switch back to original branch and pull the test branch
         gg.switch_branch(original_branch, dir=dir)
         gg.pull_non_current_branch(test_branch, dir=dir)
+        gg.pull_non_current_branch(test_branch_2, dir=dir)
 
-        # attest the test branch is up to date
+        # attest the test branches are up to date
         branches = gg.list_local_branches(dir=dir, upstream=True)
         for branch in branches:
             if branch.startswith(test_branch):
@@ -380,6 +389,7 @@ def test_branch_behind_and_ff_all(gg: GitGarden, dir: str, guid: str) -> None:
     finally:
         # cleanup test branch
         gg.delete_branch(test_branch, branch_type="all", dir=dir)
+        gg.delete_branch(test_branch_2, branch_type="all", dir=dir)
 
 
 def test_branch_gone(gg: GitGarden, dir: str, guid: str) -> None:

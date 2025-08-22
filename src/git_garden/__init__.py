@@ -453,8 +453,19 @@ class GitGarden:
         :param dir: Current directory being processed.
         :return: Return code from fetch.
         """
-        # this is a rare exception where a failing git command will not be considered fatal
-        return cast(int, self.run_and_log([self.git, "-C", dir, "fetch", "origin", f"{branch}:{branch}"]))
+        # moving HEAD may lead to data loss if there are uncommitted changes
+        if not self.check_git_status(dir):
+            # this is a rare exception where a failing git command will not be considered fatal
+            return cast(
+                int,
+                self.run_and_log([self.git, "-C", dir, "fetch", "--update-head-ok", "origin", f"{branch}:{branch}"]),
+            )
+        else:
+            self.logger.warning(
+                f"{self.pad2}{self.colours.yellow}Pulling non-current branch is precluded by uncommitted changes on "
+                f"current branch{self.colours.clear}"
+            )
+            return 1
 
     def check_branch_remote_only(self, branch: str, local_branches: List[str], remote_branches: List[str]) -> bool:
         """
@@ -524,7 +535,7 @@ class GitGarden:
                         if error:
                             self.logger.error(
                                 f"{self.pad2}{self.colours.red}Unable to fast-forward {branch_name}, "
-                                f"check debug logs for details.{self.colours.clear}"
+                                f"check debug logs for details{self.colours.clear}"
                             )
 
                 elif "[gone]" in branch:  # pragma: no cover # funcs tested seperately
